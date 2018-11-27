@@ -12,6 +12,7 @@
 - [ ] Choice of preset or user-provided authentication endpoints
 - [ ] Display data from basic patient demographics
 - [ ] Handle 503
+- [ ] Refresh token
 
 ## Installation
 
