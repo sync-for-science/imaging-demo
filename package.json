@@ -1,0 +1,22 @@
+{
+  "name": "imaging-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Andrew Bjonnes <andrew@abjonnes.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "base-64": "^0.1.0",
+    "cornerstone-core": "^2.2.7",
+    "cornerstone-tools": "^2.4.0",
+    "cornerstone-wado-image-loader": "^2.2.2",
+    "webpack": "^4.26.0",
+    "webpack-cli": "^3.1.2"
+  },
+  "scripts": {
+    "build": "webpack -d"
+  },
+  "devDependencies": {
+    "http-server": "^0.11.1"
+  }
+}
