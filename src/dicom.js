@@ -15,7 +15,7 @@ cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
 const element = document.getElementById('dicomImage');
 cornerstone.enable(element);
 
-function parseBoundary(header) {
+const parseBoundary = header => {
   const items = header.split(';');
   if (items)
     for (let item of items) {
@@ -32,7 +32,7 @@ function parseBoundary(header) {
   return '';
 }
 
-function parseMultipart(buffer, boundary) {
+const parseMultipart = (buffer, boundary) => {
   const bodyArray = new Uint8Array(buffer);
   const boundaryBytes = Array.from(boundary, x => x.charCodeAt(0));
   const boundaryArray = [0x2d, 0x2d].concat(boundaryBytes, [0x0d, 0x0a]);
@@ -57,7 +57,7 @@ function parseMultipart(buffer, boundary) {
     end = stops[i+1] - 2;
 
     const rawPart = bodyArray.slice(start, end);
-    let inHeader = true, headers = {}, line = '';
+    let headers = {}, line = '';
     for (let j = 0; j < rawPart.length - 1; j++) {
       if (rawPart[j] == 0x0d && rawPart[j+1] == 0x0a) {
         if (line === '') {
@@ -77,7 +77,7 @@ function parseMultipart(buffer, boundary) {
   return allParts;
 }
 
-function findPart(arr, subarr, start = 0) {
+const findPart = (arr, subarr, start = 0) => {
   for (let i = start; i < 1 + (arr.length - subarr.length); i++) {
     let j = 0;
     if (!(i == 0 || (arr[i-2] == 0x0d && arr[i-1] == 0x0a)))
@@ -91,10 +91,23 @@ function findPart(arr, subarr, start = 0) {
   return -1;
 }
 
-export default async function(uri) {
-  const response = await fetch(uri, {
-    headers: {Accept: 'multipart/related; type=application/dicom'}
+const makeRequest = (uri, token) => {
+  return fetch(uri, {
+    headers: {
+      Accept: 'multipart/related; type=application/dicom',
+      Authorization: 'Bearer ' + token
+    }
   });
+}
+
+const sleep = async (ms) => new Promise(r => setTimeout(r, ms));
+
+const parseDicom = async (uri, token) => {
+  let response = await makeRequest(uri, token);
+  if (response.status == 503) {
+    await sleep(3000);
+    response = await makeRequest(uri, token);
+  }
   const boundary = parseBoundary(response.headers.get('Content-Type'));
   const parts = await response.arrayBuffer()
     .then(buffer => parseMultipart(buffer, boundary));
@@ -115,3 +128,5 @@ export default async function(uri) {
     }
   });
 }
+
+export default parseDicom;

@@ -102,7 +102,7 @@ const run = async () => {
 
   const { access_token: token, patient: patientId } = await getToken(authUris.token, clientId, clientSecret, code);
   const dicomUri = await getDicomUri(patientId, token);
-  loadDicom(dicomUri);
+  loadDicom(dicomUri, token);
 }
 
 run()
