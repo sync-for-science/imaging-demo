@@ -25,8 +25,9 @@ To install with `yarn`:
 
 To run a development server:
 ```bash
-~/imaging$ npx http-server dist
+~/imaging$ yarn start
 ```
+While this is running, changes the source will be automatically compiled and the app will be refreshed in the browser.
 
 To package the sources:
 ```bash
