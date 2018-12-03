@@ -67,7 +67,8 @@ const getAuthToken = (tokenUri, client, code) => {
     headers: {Authorization: 'Basic ' + base64.encode(client.id + ':' + client.secret)},
     body: data
   })
-    .then(response => response.json());
+    .then(response => response.json())
+    .then(({access_token, patient}) => ({token: access_token, patientId: patient}));
 }
 
 export {getAuthUris, registerClient, getAuthCode, getAuthToken};
