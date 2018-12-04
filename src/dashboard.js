@@ -1,31 +1,59 @@
 import React, { Component } from 'react';
 import {
   Col,
-  Row
+  Nav,
+  NavItem,
+  NavLink,
+  Row,
+  TabContent,
+  TabPane
 } from 'reactstrap';
-import ReactJson from 'react-json-view';
+import DicomImage from './dicom.js';
+//import ReactJson from 'react-json-view';
+
+const parseStudies = ({entry}) => entry.map(({resource}) => ({
+      time: new Date(resource.started),
+      modalities: resource.modalityList.map(m => m.code),
+      accession: resource.accession.value,
+      uri: resource.contained.find(c => c.id === resource.endpoint[0].reference.slice(1)).address
+}));
 
 class Dashboard extends Component {
   constructor(props) {
     super(props);
     this.state = {
       demographicData: null,
-      studyData: null
+      studyData: [],
+      activeTab: 0
     };
+  }
+
+  fetchWithAuth(uri, options) {
+    const { auth } = this.props;
+    options.headers = options.headers || {};
+    options.headers.Authorization = 'Bearer ' + auth.token;
+    return fetch(uri, options);
   }
 
   fetchDemographics() {
     const { clinicalUri, auth } = this.props;
-    fetch(clinicalUri + '/Patient/' + auth.patientId, {
-      method: 'GET',
-      headers: {'Authorization': 'Bearer ' + auth.token}
+    this.fetchWithAuth(clinicalUri + '/Patient/' + auth.patientId, {
+      method: 'GET'
     })
       .then(response => response.json())
-      .then(response => this.setState({demographicData: response}))
+      .then(demographicData => this.setState({demographicData}))
       .catch(console.log);
   }
 
   fetchStudies() {
+    const { imagingUri, auth } = this.props;
+    this.fetchWithAuth(imagingUri + '/ImagingStudy?patient=' + auth.patientId, {
+      method: 'GET'
+    })
+      .then(response => response.json())
+      .then(parseStudies)
+      .then(studies => studies.concat(studies)) // !!
+      .then(studyData => this.setState({studyData}));
   }
 
   componentDidMount() {
@@ -34,13 +62,35 @@ class Dashboard extends Component {
   }
 
   render() {
+    const { demographicData, studyData, activeTab } = this.state;
     return (
       <Row>
         <Col sm={6}>
-          <Demographics data={this.state.demographicData} />
+          <Demographics data={demographicData} />
         </Col>
         <Col sm={6}>
-          Panel 2
+          <Nav tabs>
+            {studyData.map((datum, i) =>
+              <NavItem key={i}>
+                <NavLink
+                  className={activeTab === i && 'active'}
+                  onClick={() => this.setState({activeTab: i})}
+                >
+                  Study {i+1} [{datum.modalities.join(', ')}]
+                </NavLink>
+              </NavItem>
+            )}
+          </Nav>
+          <TabContent activeTab={activeTab}>
+            {studyData.map((datum, i) =>
+              <TabPane tabId={i} key={i}>
+                <DicomImage
+                  uri={datum.uri}
+                  fetchWithAuth={(...args) => this.fetchWithAuth(...args)}
+                  active={activeTab === i} />
+              </TabPane>
+            )}
+          </TabContent>
         </Col>
       </Row>
     );
@@ -60,7 +110,7 @@ const Demographics = props => {
   const address = props.data.address[0];
   const addressData = address.line.slice();
   addressData.push(address.city + ', ' + address.state + ' ' + address.postalCode);
-  displayData['Address'] = <div>{addressData.map(el => <div>{el}</div>)}</div>;
+  displayData['Address'] = <div>{addressData.map((el, i) => <div key={i}>{el}</div>)}</div>;
 
   const elements = ['Name', 'Gender', 'Birthday', 'Email', 'Address'].map(el =>
     <Row key={el}>

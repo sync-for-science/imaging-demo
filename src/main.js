@@ -10,7 +10,7 @@ class Main extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      clinicalUri: 'http://localhost:9006/api/fhir',
+      clinicalUri: 'https://portal-stu3.demo.syncfor.science/api/fhir',
       imagingUri: 'https://imaging-broker.demo.syncfor.science/baseDstu3',
       auth: null
     };

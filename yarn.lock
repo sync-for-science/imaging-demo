@@ -2380,6 +2380,30 @@ core-util-is@1.0.2, core-util-is@~1.0.0:
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
+cornerstone-core@^2.2.7:
+  version "2.2.7"
+  resolved "https://registry.yarnpkg.com/cornerstone-core/-/cornerstone-core-2.2.7.tgz#2205d34df5d98cfd040d2cd87987928f6001c29b"
+  integrity sha512-D2CQQMrnr9G/lH4fNspjwiqPcgS+bDFbltcGV1Y/az+402Ja0iNyMkrGQEuaaQNsz6A1D6GD03MUGI9AeVHMDw==
+
+cornerstone-math@^0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/cornerstone-math/-/cornerstone-math-0.1.6.tgz#93b3ad72fae815383cce5180af23836550200c3a"
+  integrity sha1-k7OtcvroFTg8zlGAryODZVAgDDo=
+
+cornerstone-tools@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/cornerstone-tools/-/cornerstone-tools-2.4.0.tgz#e8136d41b6140c8299a06296918b1eb6f99ea5d7"
+  integrity sha512-M0UcnqSnN8cUhjTnr+om0621yYOiL1rPP+LK5VsMqe1R3yKvfePZhSwhNjw8j4+qVXvliPsfcA7NwsvtOBOaOA==
+  dependencies:
+    cornerstone-math "^0.1.6"
+
+cornerstone-wado-image-loader@^2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/cornerstone-wado-image-loader/-/cornerstone-wado-image-loader-2.2.2.tgz#b7ad78ee6ced8469e46eff8448e15446dd71409c"
+  integrity sha512-r0co/ad9529mSZXjGWuBIM5XdWM5woGAhu2fk/Ri0iTI5ES0HZR5atOVv91RWPYRhZhLgV4oV3B1i+iW0wPK3g==
+  dependencies:
+    dicom-parser "^1.8.1"
+
 cosmiconfig@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/cosmiconfig/-/cosmiconfig-4.0.0.tgz#760391549580bbd2df1e562bc177b13c290972dc"
@@ -2875,6 +2899,11 @@ detect-port-alt@1.1.6:
   dependencies:
     address "^1.0.1"
     debug "^2.6.0"
+
+dicom-parser@^1.8.1:
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/dicom-parser/-/dicom-parser-1.8.1.tgz#5baef740f7ae2911921f3e4109b89c936b8b3273"
+  integrity sha512-8lgmQ+p4KD9lWdDpte/goUFZW9BrNCqYM/mEpO2IZl1srHj+2kmzWNbIMnYdQH60IMreS0ECJ8BnWE0rHSvBGA==
 
 diff@^3.2.0:
   version "3.5.0"
