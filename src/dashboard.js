@@ -1,18 +1,14 @@
 import React, { Component } from 'react';
 import {
   Col,
-  Nav,
-  NavItem,
-  NavLink,
-  Row,
-  TabContent,
-  TabPane
+  Collapse,
+  Navbar,
+  Row
 } from 'reactstrap';
-import DicomImage from './dicom.js';
-//import ReactJson from 'react-json-view';
+import Studies from './studies.js';
 
 const parseStudies = ({entry}) => entry.map(({resource}) => ({
-      time: new Date(resource.started),
+      date: new Date(resource.started),
       modalities: resource.modalityList.map(m => m.code),
       accession: resource.accession.value,
       uri: resource.contained.find(c => c.id === resource.endpoint[0].reference.slice(1)).address
@@ -23,12 +19,11 @@ class Dashboard extends Component {
     super(props);
     this.state = {
       demographicData: null,
-      studyData: [],
-      activeTab: 0
+      studyData: []
     };
   }
 
-  fetchWithAuth(uri, options) {
+  fetchWithAuth = (uri, options) => {
     const { auth } = this.props;
     options.headers = options.headers || {};
     options.headers.Authorization = 'Bearer ' + auth.token;
@@ -52,7 +47,7 @@ class Dashboard extends Component {
     })
       .then(response => response.json())
       .then(parseStudies)
-      .then(studies => studies.concat(studies)) // !!
+      .then(studies => studies.concat(studies)) // !! doubles the data
       .then(studyData => this.setState({studyData}));
   }
 
@@ -62,68 +57,64 @@ class Dashboard extends Component {
   }
 
   render() {
-    const { demographicData, studyData, activeTab } = this.state;
+    const { demographicData, studyData } = this.state;
     return (
-      <Row>
-        <Col sm={6}>
-          <Demographics data={demographicData} />
-        </Col>
-        <Col sm={6}>
-          <Nav tabs>
-            {studyData.map((datum, i) =>
-              <NavItem key={i}>
-                <NavLink
-                  className={activeTab === i && 'active'}
-                  onClick={() => this.setState({activeTab: i})}
-                >
-                  Study {i+1} [{datum.modalities.join(', ')}]
-                </NavLink>
-              </NavItem>
-            )}
-          </Nav>
-          <TabContent activeTab={activeTab}>
-            {studyData.map((datum, i) =>
-              <TabPane tabId={i} key={i}>
-                <DicomImage
-                  uri={datum.uri}
-                  fetchWithAuth={(...args) => this.fetchWithAuth(...args)}
-                  active={activeTab === i} />
-              </TabPane>
-            )}
-          </TabContent>
-        </Col>
-      </Row>
+      <div>
+        <Demographics data={demographicData} />
+        <Studies data={studyData} fetchWithAuth={this.fetchWithAuth} />
+      </div>
     );
   }
 }
 
-const Demographics = props => {
-  if (!props.data)
-    return '...';
+class Demographics extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showDemographics: true
+    };
+  }
 
-  const displayData = {};
-  const firstName = props.data.name[0];
-  displayData['Name'] = firstName.given.join(' ') + ' ' + firstName.family;
-  displayData['Gender'] = props.data.gender;
-  displayData['Birthday'] = new Date(props.data.birthDate).toDateString();
-  displayData['Email'] = props.data.telecom[0].value;
-  const address = props.data.address[0];
-  const addressData = address.line.slice();
-  addressData.push(address.city + ', ' + address.state + ' ' + address.postalCode);
-  displayData['Address'] = <div>{addressData.map((el, i) => <div key={i}>{el}</div>)}</div>;
+  toggle = () => {
+    this.setState({showDemographics: !this.state.showDemographics});
+  }
 
-  const elements = ['Name', 'Gender', 'Birthday', 'Email', 'Address'].map(el =>
-    <Row key={el}>
-      <Col sm={4}>
-        <b>{el}</b>
-      </Col>
-      <Col sm={8}>
-        {displayData[el]}
-      </Col>
-    </Row>
-  );
-
-  return elements;
+  render() {
+    const { data } = this.props;
+    if (!data)
+      return 'Loading?';
+  
+    const displayData = {};
+    const firstName = data.name[0];
+    displayData['Name'] = firstName.given.join(' ') + ' ' + firstName.family;
+    displayData['Gender'] = data.gender;
+    displayData['Birthday'] = new Date(data.birthDate).toDateString();
+    displayData['Email'] = data.telecom[0].value;
+    const address = data.address[0];
+    const addressData = address.line.slice();
+    addressData.push(address.city + ', ' + address.state + ' ' + address.postalCode);
+    displayData['Address'] = <div>{addressData.map((el, i) => <div key={i}>{el}</div>)}</div>;
+  
+    const elements = ['Name', 'Gender', 'Birthday', 'Email', 'Address'].map(el =>
+      <Row key={el}>
+        <Col sm={4}>
+          <b>{el}</b>
+        </Col>
+        <Col sm={8}>
+          {displayData[el]}
+        </Col>
+      </Row>
+    );
+  
+    return (
+      <div>
+        <Navbar color="light" onClick={this.toggle}>Patient Demographics</Navbar>
+        <Collapse isOpen={this.state.showDemographics}>
+          {elements}
+        </Collapse>
+      </div>
+    );
+  }
 }
 
 export default Dashboard;

@@ -49,7 +49,7 @@ class Authenticator extends Component {
   }
 
   async startAuth() {
-    const { clinicalUri, imagingUri } = this.props;
+    const { clinicalUri } = this.props;
     let { client } = this.state;
     this.setState({showProgress: true, progressState: 'initial'});
 

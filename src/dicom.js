@@ -17,6 +17,7 @@ cornerstoneWADOImageLoader.webWorkerManager.initialize({
 });
 cornerstoneTools.external.cornerstone = cornerstone;
 cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+
 const parseBoundary = header => {
   const items = header.split(';');
   if (items)
@@ -93,75 +94,61 @@ const findPart = (arr, subarr, start = 0) => {
   return -1;
 }
 
-class DicomImage extends Component {
+const doFetch = (uri, fetchWithAuth) => fetchWithAuth(uri, {
+  headers: {Accept: 'multipart/related; type=application/dicom'}
+});
+
+const download = async (uri, fetchWithAuth) => {
+  let response = await doFetch(uri, fetchWithAuth);
+  if (response.status === 503) {
+    await new Promise(r => setTimeout(r, 1500));  // sleep
+    response = await doFetch(uri, fetchWithAuth);
+  }
+
+  const boundary = parseBoundary(response.headers.get('Content-Type'));
+  const parts = await response.arrayBuffer()
+    .then(buffer => parseMultipart(buffer, boundary));
+  const blob = new Blob([parts[0].body]);
+  const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(blob);
+  return imageId;
+}
+
+class DicomPanel extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      imageId: null,
-      ready: false
-    };
-    this.data = null;
     this.element = React.createRef();
   }
 
   componentDidMount() {
-    this.loadData();
+    const element = this.element.current;
+    cornerstone.enable(element);
+    cornerstoneTools.mouseInput.enable(element);
+    cornerstoneTools.mouseWheelInput.enable(element);
+    cornerstoneTools.wwwc.activate(element, 1);
+    cornerstoneTools.pan.activate(element, 2);
+    cornerstoneTools.zoom.activate(element, 4);
+    cornerstoneTools.zoomWheel.activate(element);
   }
 
-  async loadData() {
-    let response = await this.fetchDicomData();
-    if (response.status === 503) {
-      await new Promise(r => setTimeout(r, 3000));  // sleep
-      response = await this.fetchDicomData();
-    }
-
-    const boundary = parseBoundary(response.headers.get('Content-Type'));
-    const parts = await response.arrayBuffer()
-      .then(buffer => parseMultipart(buffer, boundary));
-    const blob = new Blob([parts[0].body]);
-    const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(blob);
-    this.setState({imageId, ready: true});
+  componentWillUnmount() {
+    const element = this.element.current;
+    cornerstone.disable(element);
   }
 
-  fetchDicomData() {
-    const { uri, fetchWithAuth } = this.props;
-    return fetchWithAuth(uri, {
-      headers: {Accept: 'multipart/related; type=application/dicom'}
-    });
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    const { active } = this.props;
-    const { ready, imageId } = this.state;
-    if (!ready)
-      return;
-
-    if ((active && !prevProps.active) || !prevState.ready) {
-      cornerstone.enable(this.element.current);
+  componentDidUpdate(prevProps) {
+    const { imageId } = this.props;
+    if (imageId !== null && prevProps.imageId !== imageId) {
       cornerstone.loadImage(imageId).then(image => {
         const viewport = cornerstone.getDefaultViewportForImage(this.element.current, image);
         cornerstone.displayImage(this.element.current, image, viewport);
-        cornerstoneTools.mouseInput.enable(this.element.current);
-        cornerstoneTools.mouseWheelInput.enable(this.element.current);
-        cornerstoneTools.wwwc.activate(this.element.current, 1);  // left click
-        cornerstoneTools.pan.activate(this.element.current, 2);  // middle click
-        cornerstoneTools.zoom.activate(this.element.current, 4);  // right click
-        cornerstoneTools.zoomWheel.activate(this.element.current);
       });
     }
-    if (!active && prevProps.active)
-      cornerstone.disable(this.element.current);
   }
 
   render() {
-    const { uri } = this.props;
-    const { ready } = this.state;
-    if (ready)
-      return (
-        <div ref={this.element} style={{height: '100vh'}} />
-      );
-    else return 'Loading';
+    return <div ref={this.element} style={{height: '500px'}} />;
   }
 }
 
-export default DicomImage;
+export default DicomPanel;
+export { download };
