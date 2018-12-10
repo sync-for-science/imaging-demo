@@ -100,7 +100,7 @@ const doFetch = (uri, fetchWithAuth) => fetchWithAuth(uri, {
 
 const download = async (uri, fetchWithAuth) => {
   let response = await doFetch(uri, fetchWithAuth);
-  if (response.status === 503) {
+  while (response.status === 503) {
     await new Promise(r => setTimeout(r, 1500));  // sleep
     response = await doFetch(uri, fetchWithAuth);
   }
@@ -108,9 +108,29 @@ const download = async (uri, fetchWithAuth) => {
   const boundary = parseBoundary(response.headers.get('Content-Type'));
   const parts = await response.arrayBuffer()
     .then(buffer => parseMultipart(buffer, boundary));
-  const blob = new Blob([parts[0].body]);
-  const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(blob);
-  return imageId;
+  const stackBySeries = {};
+  for (const part of parts) {
+    const blob = new Blob([part.body]);
+    const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(blob);
+    const image = await cornerstone.loadAndCacheImage(imageId).then(newimage => {if (window.images === undefined) {window.images = [];} window.images.push(newimage);return newimage});
+    const seriesId = image.data.string('x0020000e');
+    const nFrames = image.data.intString('x00280008');
+    const newImageIds = [];
+    if (nFrames === undefined) {
+      const index = parseInt(image.data.string('x00200013'));
+      newImageIds.push({imageId, index});
+    }
+    else
+      for (let i = 0; i < nFrames; i++)
+        newImageIds.push({imageId: imageId + '?frame=' + i, index: i});
+    if (stackBySeries[seriesId] === undefined)
+      stackBySeries[seriesId] = [];
+    stackBySeries[seriesId].push(...newImageIds);
+  }
+  const sortedStacks = [];
+  for (const seriesId in stackBySeries)
+    sortedStacks.push({seriesId, imageIds: stackBySeries[seriesId].sort((a, b) => a.index - b.index).map(el => el.imageId)});
+  return sortedStacks;
 }
 
 class DicomPanel extends Component {
@@ -128,6 +148,7 @@ class DicomPanel extends Component {
     cornerstoneTools.pan.activate(element, 2);
     cornerstoneTools.zoom.activate(element, 4);
     cornerstoneTools.zoomWheel.activate(element);
+    cornerstoneTools.addStackStateManager(element);
   }
 
   componentWillUnmount() {
@@ -136,17 +157,30 @@ class DicomPanel extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { imageId } = this.props;
-    if (imageId !== null && prevProps.imageId !== imageId) {
+    const { stack } = this.props;
+    if (stack !== null && prevProps.stack !== stack) {
+      const cornerstoneStack = {currentImageIdIndex: 0, imageIds: stack.imageIds};
+      const imageId = stack.imageIds[0];
+      const element = this.element.current;
       cornerstone.loadImage(imageId).then(image => {
-        const viewport = cornerstone.getDefaultViewportForImage(this.element.current, image);
-        cornerstone.displayImage(this.element.current, image, viewport);
+        const viewport = cornerstone.getDefaultViewportForImage(element, image);
+        cornerstone.displayImage(element, image, viewport);
+
+        cornerstoneTools.clearToolState(element, 'stack');
+        cornerstoneTools.addToolState(element, 'stack', cornerstoneStack);
+
+        cornerstoneTools.playClip(element, 5);
       });
     }
   }
 
   render() {
-    return <div ref={this.element} style={{height: '500px'}} />;
+    return (
+      <div>
+        {this.props.stack && <div>Series ID: {this.props.stack.seriesId}</div>}
+        <div ref={this.element} style={{height: '500px'}} />
+      </div>
+    );
   }
 }
 

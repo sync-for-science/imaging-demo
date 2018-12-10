@@ -5,12 +5,14 @@ import {
   Navbar,
   Row
 } from 'reactstrap';
+import get from 'lodash.get';
 import Studies from './studies.js';
 
 const parseStudies = ({entry}) => entry.map(({resource}) => ({
       date: new Date(resource.started),
       modalities: resource.modalityList.map(m => m.code),
-      accession: resource.accession.value,
+      accession: get(resource, 'accession.value'),
+      nSeries: resource.numberOfSeries,
       uri: resource.contained.find(c => c.id === resource.endpoint[0].reference.slice(1)).address
 }));
 
@@ -47,7 +49,6 @@ class Dashboard extends Component {
     })
       .then(response => response.json())
       .then(parseStudies)
-      .then(studies => studies.concat(studies)) // !! doubles the data
       .then(studyData => this.setState({studyData}));
   }
 

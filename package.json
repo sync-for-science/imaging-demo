@@ -11,6 +11,7 @@
     "cornerstone-tools": "^2.4.0",
     "cornerstone-wado-image-loader": "^2.2.2",
     "jquery": "^3.3.1",
+    "lodash.get": "^4.4.2",
     "popper.js": "^1.14.3",
     "react": "^16.6.3",
     "react-dom": "^16.6.3",

@@ -2,6 +2,11 @@ import React, { Component } from 'react';
 import {
   Button,
   Collapse,
+  ListGroup,
+  ListGroupItem,
+  Modal,
+  ModalBody,
+  ModalHeader,
   Navbar,
   Table
 } from 'reactstrap';
@@ -13,7 +18,8 @@ class Studies extends Component {
     super(props);
     this.state = {
       showList: true,
-      activeImageId: null,
+      selectingSeries: null,
+      activeStack: null,
       data: []
     };
   }
@@ -26,18 +32,22 @@ class Studies extends Component {
     const { data } = this.state;
     data[i].state = 'downloading';
     this.setState({data});
-    const imageId = await download(data[i].uri, this.props.fetchWithAuth);
-    data[i].imageId = imageId;
+    const stacks = await download(data[i].uri, this.props.fetchWithAuth);
+    data[i].stacks = stacks;
     data[i].state = 'downloaded';
     this.setState({data});
   }
 
   viewStudy = i => {
-    const { data, showList } = this.state;
-    const newState = {activeImageId: data[i].imageId};
-    if (showList) {
+    const { data } = this.state;
+    const stacks = data[i].stacks;
+    const newState = {}
+    if (stacks.length === 1) {
+      newState.activeStack = stacks[0];
       newState.showList = false;
     }
+    else
+      newState.selectingSeries = i;
     this.setState(newState);
   }
 
@@ -50,21 +60,71 @@ class Studies extends Component {
     }
   }
 
+  handleSelect = (studyIdx, seriesIdx) => {
+    this.setState({
+      selectingSeries: null,
+      showList: false,
+      activeStack: this.state.data[studyIdx].stacks[seriesIdx]
+    });
+  }
+
   componentDidUpdate(prevProps) {
     if (prevProps.data !== this.props.data) {
-      this.setState({data: this.props.data.map(d => ({...d, state: 'initial', imageId: null}))});
+      this.setState({data: this.props.data.map(d => ({...d, state: 'initial', stacks: null}))});
     }
   }
 
   render() {
+    const { selectingSeries, showList, data, activeStack } = this.state;
     return (
       <div>
+        {(selectingSeries !== null) && <SeriesSelectModal stacks={data[selectingSeries].stacks} cancel={() => this.setState({selectingSeries: null})} select={i => this.handleSelect(selectingSeries, i)}>Select a series to view</SeriesSelectModal>}
         <Navbar color="light" onClick={this.toggle}>Available Studies</Navbar>
-        <Collapse isOpen={this.state.showList}>
-          <StudyTable rows={this.state.data} handleAction={this.handleAction} />
+        <Collapse isOpen={showList}>
+          <StudyTable rows={data} handleAction={this.handleAction} />
         </Collapse>
-        <DicomPanel imageId={this.state.activeImageId} />
+        <DicomPanel stack={activeStack} />
       </div>
+    );
+  }
+}
+
+class SeriesSelectModal extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {open: true};
+  }
+
+  fade(callback) {
+    const fadeTime = 300; // !
+    setTimeout(callback, fadeTime);
+    this.setState({open: false});
+  }
+
+  cancel() {
+    this.fade(this.props.cancel);
+  }
+
+  select(i) {
+    this.fade(() => this.props.select(i));
+  }
+
+  render() {
+    const { open } = this.state;
+    const { children, stacks } = this.props;
+    return (
+      <Modal toggle={() => this.cancel()} isOpen={open} size="lg">
+        <ModalHeader>
+          {children}
+        </ModalHeader>
+        <ModalBody>
+          <ListGroup>
+            {stacks.map((stack, i) =>
+              <ListGroupItem key={i} tag="a" href="#" action onClick={() => this.select(i)}>{stack.seriesId}</ListGroupItem>
+            )}
+          </ListGroup>
+        </ModalBody>
+      </Modal>
     );
   }
 }
@@ -76,6 +136,7 @@ const StudyTable = props => {
         <tr>
           <th style={{width: '150px'}} />
           <th>Accession</th>
+          <th># series</th>
           <th>Date</th>
           <th>Modality</th>
         </tr>
@@ -90,6 +151,7 @@ const StudyTable = props => {
               {row.state === 'downloading' && <CircularProgress size={24} style={{position: 'absolute', top: '50%', left: '50%', marginTop: -12, marginLeft: -12}} />}
             </td>
             <td>{row.accession}</td>
+            <td>{row.nSeries}</td>
             <td>{row.date.toLocaleString()}</td>
             <td>{row.modalities}</td>
           </tr>
