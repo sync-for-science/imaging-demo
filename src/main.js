@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import {
-  Container,
+  Navbar,
+  NavbarBrand
 } from 'reactstrap';
 import Authenticator from './authenticator.js';
 import Dashboard from './dashboard.js';
-import './App.css';
+import './styles/index.scss';
+import logo from './logo.png';
 
 class Main extends Component {
   constructor(props) {
@@ -30,9 +32,12 @@ class Main extends Component {
                     imagingUri={imagingUri}
                     auth={auth} />;
     return (
-      <Container style={{marginTop: '100px'}}>
-        {component}
-      </Container>
+      <div>
+      <Navbar style={{background: '#332F7B'}}>
+        <NavbarBrand><img src={logo} height="50px" alt="S4S logo"/></NavbarBrand>
+      </Navbar>
+      {component}
+      </div>
     );
   }
 }

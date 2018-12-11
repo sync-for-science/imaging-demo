@@ -1,54 +1,45 @@
 import React, { Component } from 'react';
 import {
+  Badge,
   Button,
-  Collapse,
+  Card,
+  CardTitle,
+  CardText,
   ListGroup,
   ListGroupItem,
   Modal,
   ModalBody,
-  ModalHeader,
-  Navbar,
-  Table
+  ModalHeader
 } from 'reactstrap';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import DicomPanel, { download } from './dicom.js';
+import moment from 'moment';
 
 class Studies extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showList: true,
       selectingSeries: null,
-      activeStack: null,
+      activeSeries: null,
       data: []
     };
-  }
-
-  toggle = () => {
-    this.setState({showList: !this.state.showList});
   }
 
   downloadStudy = async i => {
     const { data } = this.state;
     data[i].state = 'downloading';
     this.setState({data});
-    const stacks = await download(data[i].uri, this.props.fetchWithAuth);
-    data[i].stacks = stacks;
+    await data[i].study.download(this.props.fetchWithAuth);
     data[i].state = 'downloaded';
     this.setState({data});
   }
 
   viewStudy = i => {
     const { data } = this.state;
-    const stacks = data[i].stacks;
-    const newState = {}
-    if (stacks.length === 1) {
-      newState.activeStack = stacks[0];
-      newState.showList = false;
-    }
+    const study = data[i].study;
+    if (study.series.length === 1)
+      this.props.setActiveSeries(study.series[0]);
     else
-      newState.selectingSeries = i;
-    this.setState(newState);
+      this.setState({selectingSeries: i});
   }
 
   handleAction = async i => {
@@ -61,29 +52,22 @@ class Studies extends Component {
   }
 
   handleSelect = (studyIdx, seriesIdx) => {
-    this.setState({
-      selectingSeries: null,
-      showList: false,
-      activeStack: this.state.data[studyIdx].stacks[seriesIdx]
-    });
+    this.setState({selectingSeries: null});
+    this.props.setActiveSeries(this.state.data[studyIdx].study.series[seriesIdx]);
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.data !== this.props.data) {
-      this.setState({data: this.props.data.map(d => ({...d, state: 'initial', stacks: null}))});
+    if (prevProps.studies !== this.props.studies) {
+      this.setState({data: this.props.studies.map(d => ({study: d, state: 'initial'}))});
     }
   }
 
   render() {
-    const { selectingSeries, showList, data, activeStack } = this.state;
+    const { selectingSeries, data } = this.state;
     return (
       <div>
-        {(selectingSeries !== null) && <SeriesSelectModal stacks={data[selectingSeries].stacks} cancel={() => this.setState({selectingSeries: null})} select={i => this.handleSelect(selectingSeries, i)}>Select a series to view</SeriesSelectModal>}
-        <Navbar color="light" onClick={this.toggle}>Available Studies</Navbar>
-        <Collapse isOpen={showList}>
-          <StudyTable rows={data} handleAction={this.handleAction} />
-        </Collapse>
-        <DicomPanel stack={activeStack} />
+        {(selectingSeries !== null) && <SeriesSelectModal series={data[selectingSeries].study.series} cancel={() => this.setState({selectingSeries: null})} select={i => this.handleSelect(selectingSeries, i)}>Select a series to view for <b>{data[selectingSeries].study.description}</b></SeriesSelectModal>}
+      <StudyCards cards={data} handleAction={this.handleAction} />
       </div>
     );
   }
@@ -111,16 +95,16 @@ class SeriesSelectModal extends Component {
 
   render() {
     const { open } = this.state;
-    const { children, stacks } = this.props;
+    const { children, series } = this.props;
     return (
-      <Modal toggle={() => this.cancel()} isOpen={open} size="lg">
+      <Modal toggle={() => this.cancel()} isOpen={open}>
         <ModalHeader>
           {children}
         </ModalHeader>
         <ModalBody>
           <ListGroup>
-            {stacks.map((stack, i) =>
-              <ListGroupItem key={i} tag="a" href="#" action onClick={() => this.select(i)}>{stack.seriesId}</ListGroupItem>
+            {series.map((s, i) =>
+              <ListGroupItem key={i} tag="a" href="#" action onClick={() => this.select(i)}>{s.description} <Badge pill>{s.modality}</Badge></ListGroupItem>
             )}
           </ListGroup>
         </ModalBody>
@@ -129,36 +113,40 @@ class SeriesSelectModal extends Component {
   }
 }
 
-const StudyTable = props => {
-  return (
-    <Table hover className="text-center" size="sm">
-      <thead>
-        <tr>
-          <th style={{width: '150px'}} />
-          <th>Accession</th>
-          <th># series</th>
-          <th>Date</th>
-          <th>Modality</th>
-        </tr>
-      </thead>
-      <tbody>
-        {props.rows.map((row, i) =>
-          <tr key={i}>
-            <td style={{position: 'relative'}}>
-              <Button onClick={() => props.handleAction(i)} disabled={row.state === 'downloading'}>
-                {row.state === 'downloaded' ? 'View' : 'Download'}
-              </Button>
-              {row.state === 'downloading' && <CircularProgress size={24} style={{position: 'absolute', top: '50%', left: '50%', marginTop: -12, marginLeft: -12}} />}
-            </td>
-            <td>{row.accession}</td>
-            <td>{row.nSeries}</td>
-            <td>{row.date.toLocaleString()}</td>
-            <td>{row.modalities}</td>
-          </tr>
-        )}
-      </tbody>
-    </Table>
-  );
-}
+const StudyCards = ({ cards, handleAction }) => (
+  cards.map(({ study, state }, i) => (
+    <Card key={i} body style={{position: 'relative'}}>
+      <CardTitle>
+        Study #{i+1} 
+        {study.description && ' - ' + study.description}
+        {study.modalities.map((m, i) => <Badge key={i}>{m}</Badge>)}
+      </CardTitle>
+      <CardText>
+        {study.date && moment(study.date).format('MMMM YYYY')}
+        <br />
+        {study.nSeries} series
+      </CardText>
+      <Button
+        onClick={() => handleAction(i)} 
+        disabled={state === 'downloading'}
+        style={{
+          position: 'relative'
+        }} >
+        {state === 'downloaded' ? 'Review' : 'Download'}
+      {state === 'downloading' &&
+        <CircularProgress
+          size={24}
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            marginTop: '-12px',
+            marginLeft: '-12px',
+            color: '#332f7b'
+          }} />}
+      </Button>
+    </Card>
+  ))
+);
 
 export default Studies;

@@ -1,27 +1,22 @@
 import React, { Component } from 'react';
 import {
   Col,
-  Collapse,
-  Navbar,
   Row
 } from 'reactstrap';
-import get from 'lodash.get';
 import Studies from './studies.js';
+import { DicomStudy, DicomPanel } from './dicom.js';
+import get from 'lodash.get';
+import moment from 'moment';
 
-const parseStudies = ({entry}) => entry.map(({resource}) => ({
-      date: new Date(resource.started),
-      modalities: resource.modalityList.map(m => m.code),
-      accession: get(resource, 'accession.value'),
-      nSeries: resource.numberOfSeries,
-      uri: resource.contained.find(c => c.id === resource.endpoint[0].reference.slice(1)).address
-}));
+const parseStudies = ({entry}) => entry.map(({resource}) => new DicomStudy(resource));
 
 class Dashboard extends Component {
   constructor(props) {
     super(props);
     this.state = {
       demographicData: null,
-      studyData: []
+      studies: [],
+      activeSeries: null
     };
   }
 
@@ -49,7 +44,7 @@ class Dashboard extends Component {
     })
       .then(response => response.json())
       .then(parseStudies)
-      .then(studyData => this.setState({studyData}));
+      .then(studies => this.setState({studies}));
   }
 
   componentDidMount() {
@@ -58,64 +53,53 @@ class Dashboard extends Component {
   }
 
   render() {
-    const { demographicData, studyData } = this.state;
+    const { demographicData, studies, activeSeries } = this.state;
     return (
       <div>
-        <Demographics data={demographicData} />
-        <Studies data={studyData} fetchWithAuth={this.fetchWithAuth} />
+        <Header demographics={demographicData} />
+        <Row>
+          <Col sm={3}>
+            <Studies
+              studies={studies}
+              fetchWithAuth={this.fetchWithAuth}
+              setActiveSeries={activeSeries => this.setState({activeSeries})} />
+          </Col>
+          <Col sm={9}>
+            <DicomPanel series={activeSeries} />
+          </Col>
+        </Row>
       </div>
     );
   }
 }
 
-class Demographics extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showDemographics: true
-    };
+const Header = ({ demographics }) => {
+  let name, birthday, city;
+
+  if (demographics) {
+    const fhirName = get(demographics, 'name.0');
+    if (fhirName !== undefined)
+      name = fhirName.given.join(' ') + ' ' + fhirName.family;
+
+    if (demographics.birthDate)
+      birthday = moment(demographics.birthDate).format('MM-DD-YYYY');
+
+    const fhirAddress = get(demographics, 'address.0');
+    if (fhirAddress !== undefined) {
+      city = fhirAddress.city + ', ' + fhirAddress.state;
+    }
   }
 
-  toggle = () => {
-    this.setState({showDemographics: !this.state.showDemographics});
-  }
-
-  render() {
-    const { data } = this.props;
-    if (!data)
-      return 'Loading?';
-  
-    const displayData = {};
-    const firstName = data.name[0];
-    displayData['Name'] = firstName.given.join(' ') + ' ' + firstName.family;
-    displayData['Gender'] = data.gender;
-    displayData['Birthday'] = new Date(data.birthDate).toDateString();
-    displayData['Email'] = data.telecom[0].value;
-    const address = data.address[0];
-    const addressData = address.line.slice();
-    addressData.push(address.city + ', ' + address.state + ' ' + address.postalCode);
-    displayData['Address'] = <div>{addressData.map((el, i) => <div key={i}>{el}</div>)}</div>;
-  
-    const elements = ['Name', 'Gender', 'Birthday', 'Email', 'Address'].map(el =>
-      <Row key={el}>
-        <Col sm={4}>
-          <b>{el}</b>
-        </Col>
-        <Col sm={8}>
-          {displayData[el]}
-        </Col>
-      </Row>
-    );
-  
-    return (
-      <div>
-        <Navbar color="light" onClick={this.toggle}>Patient Demographics</Navbar>
-        <Collapse isOpen={this.state.showDemographics}>
-          {elements}
-        </Collapse>
-      </div>
-    );
-  }
+  return (
+    <div>
+      <h1>S4S Imaging Demo Application</h1>
+      <h5>
+        {name && name + ' | '}
+        {birthday && 'DOB: ' + birthday + ' | '}
+        {city}
+      </h5>
+    </div>
+  );
 }
 
 export default Dashboard;

@@ -1,0 +1,16 @@
+$theme-colors: (
+  'primary': #332f7b,
+  'secondary': #92c1e9
+);
+
+@import 'bootstrap/scss/bootstrap.scss';
+
+.badge {
+  margin-left: 5px;
+}
+
+.card-body {
+  margin-left: 30px;
+  margin-right: 30px;
+  margin-bottom: 30px;
+}
