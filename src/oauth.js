@@ -81,4 +81,4 @@ const getAuthToken = (tokenUri, client, code) => {
     }));
 };
 
-export { getAuthUris, registerClient, getAuthCode, getAuthToken };
+export { getAuthUris, registerClient, getAuthCode, getAuthToken, redirectUri };

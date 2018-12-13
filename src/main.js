@@ -9,8 +9,8 @@ class Main extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      clinicalUri: "https://portal-stu3.demo.syncfor.science/api/fhir",
-      imagingUri: "https://imaging-broker.demo.syncfor.science/baseDstu3",
+      clinicalUri: null,
+      imagingUri: null,
       auth: null
     };
   }
@@ -21,9 +21,9 @@ class Main extends Component {
     if (!auth)
       component = (
         <Authenticator
-          clinicalUri={clinicalUri}
-          imagingUri={imagingUri}
-          setAuth={auth => this.setState({ auth })}
+          setState={(clinicalUri, imagingUri, auth) =>
+            this.setState({ clinicalUri, imagingUri, auth })
+          }
         />
       );
     else

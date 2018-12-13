@@ -37,6 +37,7 @@ class Dashboard extends Component {
 
   fetchStudies() {
     const { imagingUri, auth } = this.props;
+    console.log(auth);
     this.fetchWithAuth(imagingUri + "/ImagingStudy?patient=" + auth.patientId, {
       method: "GET"
     })
