@@ -1,5 +1,5 @@
-import React, { Component } from "react";
-import { Col, Row } from "reactstrap";
+import React, { Component, Fragment } from "react";
+import { Button, Col, Container, Row } from "reactstrap";
 import Studies from "./studies.js";
 import { DicomStudy, DicomPanel } from "./dicom.js";
 import get from "lodash.get";
@@ -54,9 +54,19 @@ class Dashboard extends Component {
 
   render() {
     const { demographicData, studies, activeSeries } = this.state;
+    const { revokeAuth } = this.props;
     return (
-      <div>
-        <Header demographics={demographicData} />
+      <Container fluid={true}>
+        <Row>
+          <Col sm={8}>
+            <Header demographics={demographicData} />
+          </Col>
+          <Col sm={4} className="align-self-center text-center">
+            <Button size="sm" outline color="primary" onClick={revokeAuth}>
+              Revoke authorization
+            </Button>
+          </Col>
+        </Row>
         <Row>
           <Col sm={3}>
             <Studies
@@ -69,7 +79,7 @@ class Dashboard extends Component {
             <DicomPanel series={activeSeries} />
           </Col>
         </Row>
-      </div>
+      </Container>
     );
   }
 }

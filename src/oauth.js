@@ -1,4 +1,5 @@
 import base64 from "base-64";
+import moment from "moment";
 
 const redirectUri = new URL("redirect", window.location).href;
 
@@ -61,24 +62,49 @@ const getAuthCode = (authorizeUri, clinicalUri, client) => {
   });
 };
 
-const getAuthToken = (tokenUri, client, code) => {
-  const data = new FormData();
-  data.set("grant_type", "authorization_code");
-  data.set("code", code);
-  data.set("redirect_uri", redirectUri);
-
-  return fetch(tokenUri, {
+const authTokenRequest = async (tokenUri, client, data) => {
+  const response = await fetch(tokenUri, {
     method: "POST",
     headers: {
       Authorization: "Basic " + base64.encode(client.id + ":" + client.secret)
     },
     body: data
-  })
-    .then(response => response.json())
-    .then(({ access_token, patient }) => ({
-      token: access_token,
-      patientId: patient
-    }));
+  });
+  const json = await response.json();
+
+  return {
+    token: json.access_token,
+    patientId: json.patient,
+    refreshToken: json.refresh_token,
+    refreshUri: tokenUri,
+    client: client,
+    expires: moment()
+      .add(json.expires_in, "s")
+      .valueOf()
+  };
 };
 
-export { getAuthUris, registerClient, getAuthCode, getAuthToken, redirectUri };
+const getAuthToken = async (tokenUri, client, code) => {
+  const data = new FormData();
+  data.set("grant_type", "authorization_code");
+  data.set("code", code);
+  data.set("redirect_uri", redirectUri);
+  return await authTokenRequest(tokenUri, client, data);
+};
+
+const refreshAuthToken = async (tokenUri, client, token) => {
+  const data = new FormData();
+  data.set("grant_type", "refresh_token");
+  data.set("refresh_token", token);
+  data.set("redirect_uri", redirectUri);
+  return await authTokenRequest(tokenUri, client, data);
+};
+
+export {
+  getAuthUris,
+  registerClient,
+  getAuthCode,
+  getAuthToken,
+  refreshAuthToken,
+  redirectUri
+};

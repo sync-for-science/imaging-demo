@@ -154,7 +154,7 @@ class Authenticator extends Component {
     }
     this.setState({ progressState: "authToken" });
 
-    setTimeout(() => this.props.setState(clinicalUri, imagingUri, auth), 1500);
+    setTimeout(() => this.props.setAuth(clinicalUri, imagingUri, auth), 1500);
   };
 
   prefill = () => {
