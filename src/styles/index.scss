@@ -5,6 +5,15 @@ $theme-colors: (
 
 @import 'bootstrap/scss/bootstrap.scss';
 
+@font-face {
+  font-family: 'Gotham Book Regular';
+  src: local('Gotham Book Regular'), url(./fonts/GothamBookRegular.otf) format('opentype');
+}
+
+body {
+  font-family: 'Gotham Book Regular';
+}
+
 .badge {
   margin-left: 5px;
 }

@@ -47,6 +47,7 @@ class Dashboard extends Component {
   }
 
   componentDidMount() {
+    window.scrollTo(0, 0);
     this.fetchDemographics();
     this.fetchStudies();
   }
@@ -91,14 +92,14 @@ const Header = ({ demographics }) => {
   }
 
   return (
-    <div>
+    <Fragment>
       <h1>S4S Imaging Demo Application</h1>
       <h5>
         {name && name + " | "}
         {birthday && "DOB: " + birthday + " | "}
         {city}
       </h5>
-    </div>
+    </Fragment>
   );
 };
 

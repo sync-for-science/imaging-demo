@@ -4,6 +4,7 @@ import Authenticator from "./authenticator.js";
 import Dashboard from "./dashboard.js";
 import "./styles/index.scss";
 import logo from "./logo.png";
+import githubLogo from "./github.svg";
 
 class Main extends Component {
   constructor(props) {
@@ -40,6 +41,16 @@ class Main extends Component {
           <NavbarBrand>
             <img src={logo} height="50px" alt="S4S logo" />
           </NavbarBrand>
+          <Nav navbar style={{ marginRight: "50px" }}>
+            <NavItem>
+              <NavLink
+                href="https://github.com/sync-for-science/imaging-demo"
+                target="_blank"
+              >
+                <img src={githubLogo} width="25px" height="25px" />
+              </NavLink>
+            </NavItem>
+          </Nav>
         </Navbar>
         {component}
       </div>
