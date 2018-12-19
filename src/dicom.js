@@ -1,4 +1,5 @@
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
+import { Button, Col, Row } from 'reactstrap';
 import * as cornerstone from "cornerstone-core";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as cornerstoneTools from "cornerstone-tools";
@@ -170,7 +171,11 @@ class DicomSeries {
     if (!this.modality) this.modality = instanceData.string("x00080060");
     if (!this.studyDescription)
       this.studyDescription = instanceData.string("x00081030");
-    if (!this.patientName) this.patientName = instanceData.string("x00100010");
+    const dicomPatientName = instanceData.string("x00100010");
+    if (!this.patientName && dicomPatientName) {
+      const names = dicomPatientName.split("^");
+      this.patientName = names.reverse().join(" ");
+    }
   }
 
   get imageIds() {
@@ -184,17 +189,22 @@ class DicomPanel extends Component {
   constructor(props) {
     super(props);
     this.element = React.createRef();
+    this.state = {
+      running: true
+    };
   }
 
   componentDidMount() {
     const element = this.element.current;
     cornerstone.enable(element);
+    cornerstoneTools.keyboardInput.enable(element);
     cornerstoneTools.mouseInput.enable(element);
     cornerstoneTools.mouseWheelInput.enable(element);
     cornerstoneTools.wwwc.activate(element, 1);
     cornerstoneTools.pan.activate(element, 2);
     cornerstoneTools.zoom.activate(element, 4);
     cornerstoneTools.zoomWheel.activate(element);
+    cornerstoneTools.stackScrollKeyboard.activate(element);
     cornerstoneTools.addStackStateManager(element);
   }
 
@@ -212,6 +222,7 @@ class DicomPanel extends Component {
       };
       const imageId = series.imageIds[0];
       const element = this.element.current;
+      cornerstoneTools.stopClip(element);
       cornerstone.loadImage(imageId).then(image => {
         const viewport = cornerstone.getDefaultViewportForImage(element, image);
         cornerstone.displayImage(element, image, viewport);
@@ -219,16 +230,44 @@ class DicomPanel extends Component {
         cornerstoneTools.clearToolState(element, "stack");
         cornerstoneTools.addToolState(element, "stack", cornerstoneStack);
 
+        element.tabIndex = 0;
+        element.focus();
+
         cornerstoneTools.playClip(element, 5);
       });
+      this.setState({running: true});
     }
   }
 
+  toggleRunningState = () => {
+    const { running } = this.state;
+    const element = this.element.current;
+    if (running)
+      cornerstoneTools.stopClip(element);
+    else
+      cornerstoneTools.playClip(element, 5);
+    this.setState({ running: !running });
+  }
+
   render() {
+    const { running } = this.state;
     const { series } = this.props;
     return (
-      <div>
-        {this.props.series && (
+      <Fragment>
+        {series && <ControlPanel running={running} toggleState={this.toggleRunningState} series={series} />}
+        <div ref={this.element} style={{ height: "750px" }} />
+      </Fragment>
+    );
+  }
+}
+
+const ControlPanel = props => {
+  const { series, running, toggleState } = props;
+  
+  return (
+    <Row>
+      <Col sm={6}>
+        {series && (
           <div>
             <b>
               {series.studyDescription ? series.studyDescription + " - " : ""}
@@ -237,10 +276,15 @@ class DicomPanel extends Component {
             for <b>{series.patientName}</b>
           </div>
         )}
-        <div ref={this.element} style={{ height: "750px" }} />
-      </div>
-    );
-  }
+      </Col>
+      {series.imageIds.length > 1 && (
+        <Col sm={6} className="align-self-center text-center">
+          <Button disabled={running} onClick={toggleState} style={{ marginRight: "20px" }}>Start</Button>
+          <Button disabled={!running} onClick={toggleState}>Stop</Button>
+        </Col>
+      )}
+    </Row>
+  );
 }
 
 export { DicomStudy, DicomSeries, DicomPanel };

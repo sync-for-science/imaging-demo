@@ -120,7 +120,7 @@ class SeriesSelectModal extends Component {
                 action
                 onClick={() => this.select(i)}
               >
-                {s.description} <Badge pill>{s.modality}</Badge>
+                {s.description} <Badge>{s.modality}</Badge>
               </ListGroupItem>
             ))}
           </ListGroup>

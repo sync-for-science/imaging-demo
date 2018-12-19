@@ -115,7 +115,7 @@ class Main extends Component {
         />
       );
     return (
-      <div style={{ marginBottom: "50px" }}>
+      <div style={{ marginBottom: "50px", height: '100vh' }}>
         <Modal isOpen={showModal} centered={true}>
           <ModalBody>
             Your authorization token has expired or was revoked. Please

@@ -68,7 +68,7 @@ class Dashboard extends Component {
           </Col>
         </Row>
         <Row>
-          <Col sm={3}>
+          <Col sm={3} style={{ overflowY: 'scroll' }}>
             <Studies
               studies={studies}
               fetchWithAuth={this.fetchWithAuth}
