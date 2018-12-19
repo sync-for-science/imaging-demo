@@ -13,6 +13,7 @@ import {
 import Authenticator from "./authenticator.js";
 import Dashboard from "./dashboard.js";
 import "./styles/index.scss";
+import "./styles/open-iconic-bootstrap.scss";
 import logo from "./logo.png";
 import githubLogo from "./github.svg";
 import { refreshAuthToken } from "./oauth.js";
@@ -115,7 +116,7 @@ class Main extends Component {
         />
       );
     return (
-      <div style={{ marginBottom: "50px", height: '100vh' }}>
+      <div>
         <Modal isOpen={showModal} centered={true}>
           <ModalBody>
             Your authorization token has expired or was revoked. Please

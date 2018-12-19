@@ -7,6 +7,8 @@ import * as cornerstoneMath from "cornerstone-math";
 import * as dicomParser from "dicom-parser";
 import get from "lodash.get";
 
+import { stackScroller, stackToggler } from "./tools.js";
+
 cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
 cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
 cornerstoneWADOImageLoader.webWorkerManager.initialize({
@@ -204,7 +206,8 @@ class DicomPanel extends Component {
     cornerstoneTools.pan.activate(element, 2);
     cornerstoneTools.zoom.activate(element, 4);
     cornerstoneTools.zoomWheel.activate(element);
-    cornerstoneTools.stackScrollKeyboard.activate(element);
+    stackScroller.activate(element);
+    stackToggler(() => this.toggleRunningState(!this.state.running)).activate(element);
     cornerstoneTools.addStackStateManager(element);
   }
 
@@ -239,14 +242,19 @@ class DicomPanel extends Component {
     }
   }
 
-  toggleRunningState = () => {
+  scroll = forward => {
+    const element = this.element.current;
+    cornerstoneTools.scroll(element, forward ? 1 : -1, true);
+  }
+
+  toggleRunningState = start => {
     const { running } = this.state;
     const element = this.element.current;
-    if (running)
+    if (running && !start)
       cornerstoneTools.stopClip(element);
-    else
+    else if (!running && start)
       cornerstoneTools.playClip(element, 5);
-    this.setState({ running: !running });
+    this.setState({ running: start });
   }
 
   render() {
@@ -254,7 +262,7 @@ class DicomPanel extends Component {
     const { series } = this.props;
     return (
       <Fragment>
-        {series && <ControlPanel running={running} toggleState={this.toggleRunningState} series={series} />}
+        {series && <ControlPanel running={running} toggleState={this.toggleRunningState} series={series} scroll={this.scroll} />}
         <div ref={this.element} style={{ height: "750px" }} />
       </Fragment>
     );
@@ -262,7 +270,7 @@ class DicomPanel extends Component {
 }
 
 const ControlPanel = props => {
-  const { series, running, toggleState } = props;
+  const { series, running, toggleState, scroll } = props;
   
   return (
     <Row>
@@ -279,8 +287,10 @@ const ControlPanel = props => {
       </Col>
       {series.imageIds.length > 1 && (
         <Col sm={6} className="align-self-center text-center">
-          <Button disabled={running} onClick={toggleState} style={{ marginRight: "20px" }}>Start</Button>
-          <Button disabled={!running} onClick={toggleState}>Stop</Button>
+          <span className="oi oi-chevron-left control-scroll" onClick={() => scroll(false)} />
+          <span className={[running ? "control-disabled" : "control-enabled", "oi", "oi-media-play"].join(" ")} onClick={() => toggleState(true)} />
+          <span className={[running ? "control-enabled" : "control-disabled", "oi", "oi-media-pause"].join(" ")} onClick={() => toggleState(false)} />
+          <span className="oi oi-chevron-right control-scroll" onClick={() => scroll(true)} />
         </Col>
       )}
     </Row>

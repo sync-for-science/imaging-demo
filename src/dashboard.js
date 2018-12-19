@@ -4,6 +4,7 @@ import Studies from "./studies.js";
 import { DicomStudy, DicomPanel } from "./dicom.js";
 import get from "lodash.get";
 import moment from "moment";
+import { PopoverTip2 } from "./popoverTips.js";
 
 const parseStudies = ({ entry }) =>
   entry.map(({ resource }) => new DicomStudy(resource));
@@ -102,14 +103,15 @@ const Header = ({ demographics }) => {
   }
 
   return (
-    <Fragment>
+    <div style={{margin: "20px"}}>
       <h1>S4S Imaging Demo Application</h1>
       <h5>
         {name && name + " | "}
         {birthday && "DOB: " + birthday + " | "}
         {city}
+        <PopoverTip2 />
       </h5>
-    </Fragment>
+    </div>
   );
 };
 

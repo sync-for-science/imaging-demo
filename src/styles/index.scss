@@ -1,18 +1,15 @@
+@font-face {
+  font-family: 'Gotham Book';
+  src: local('Gotham Book'), url(./fonts/GothamBookRegular.otf) format('opentype');
+}
+
 $theme-colors: (
   'primary': #332f7b,
   'secondary': #92c1e9
 );
+$font-family-sans-serif: 'Gotham Book';
 
 @import 'bootstrap/scss/bootstrap.scss';
-
-@font-face {
-  font-family: 'Gotham Book Regular';
-  src: local('Gotham Book Regular'), url(./fonts/GothamBookRegular.otf) format('opentype');
-}
-
-body {
-  font-family: 'Gotham Book Regular';
-}
 
 .badge {
   margin-left: 5px;
@@ -22,4 +19,34 @@ body {
   margin-left: 30px;
   margin-right: 30px;
   margin-bottom: 30px;
+}
+
+%play-control {
+  color: map-get($theme-colors, 'secondary');
+  font-size: 24pt;
+  margin-left: 25px;
+  vertical-align: middle;
+}
+
+.control-scroll {
+  @extend %play-control;
+  font-size: 18pt;
+}
+
+.control-enabled {
+  @extend %play-control;
+}
+
+.control-disabled {
+  @extend %play-control;
+  opacity: 0.5;
+}
+
+.popover {
+  max-width: 512px;
+}
+
+.popover-trigger {
+  margin-left: 10px;
+  font-size: 16px;
 }

@@ -25,6 +25,9 @@ import {
   redirectUri,
   registerClient
 } from "./oauth.js";
+import {
+  PopoverTip1
+} from "./popoverTips.js";
 import debounce from "lodash.debounce";
 
 const defaults = {
@@ -43,7 +46,8 @@ class Authenticator extends Component {
       showClientRegistration: false,
       clinicalUri: "",
       imagingUri: "",
-      error: null
+      error: null,
+      popoverOpen: [false, false, false, false]
     };
   }
 
@@ -167,6 +171,14 @@ class Authenticator extends Component {
     this.setState(newState);
   };
 
+  togglePopover = (i, e) => {
+    if (e)
+      e.preventDefault();
+    const { popoverOpen } = this.state;
+    popoverOpen[i] = !popoverOpen[i];
+    this.setState({ popoverOpen });
+  }
+
   render() {
     const {
       showProgress,
@@ -175,7 +187,8 @@ class Authenticator extends Component {
       clinicalUri,
       imagingUri,
       client,
-      error
+      error,
+      popoverOpen
     } = this.state;
 
     return (
@@ -220,7 +233,7 @@ class Authenticator extends Component {
         <Form>
           <FormGroup>
             <Label for="clinicalUri" size="lg">
-              Clinical FHIR Server
+              Clinical FHIR Server <PopoverTip1 />
             </Label>
             <ValidatedFHIRInput
               name="clinicalUri"

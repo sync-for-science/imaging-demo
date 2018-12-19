@@ -13,6 +13,7 @@ import {
 } from "reactstrap";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import moment from "moment";
+import { PopoverTip3, PopoverTip4, PopoverTip5 } from "./popoverTips.js";
 
 class Studies extends Component {
   constructor(props) {
@@ -78,6 +79,7 @@ class Studies extends Component {
             <b>{data[selectingSeries].study.description}</b>
           </SeriesSelectModal>
         )}
+        {data.length > 0 && <h4 style={{textAlign: "center"}}>Available Studies <PopoverTip3 /></h4>}
         <StudyCards cards={data} handleAction={this.handleAction} />
       </div>
     );
@@ -139,6 +141,7 @@ const StudyCards = ({ cards, handleAction }) =>
         {study.modalities.map((m, i) => (
           <Badge key={i}>{m}</Badge>
         ))}
+        {state === "downloaded" ? <PopoverTip5 /> : <PopoverTip4 />}
       </CardTitle>
       <CardText>
         {study.date && moment(study.date).format("MMMM YYYY")}
