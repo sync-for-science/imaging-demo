@@ -69,7 +69,7 @@ class Dashboard extends Component {
           </Col>
         </Row>
         <Row>
-          <Col sm={3} style={{ overflowY: 'scroll' }}>
+          <Col sm={3}>
             <Studies
               studies={studies}
               fetchWithAuth={this.fetchWithAuth}
@@ -103,7 +103,7 @@ const Header = ({ demographics }) => {
   }
 
   return (
-    <div style={{margin: "20px"}}>
+    <div style={{ margin: "20px" }}>
       <h1>S4S Imaging Demo Application</h1>
       <h5>
         {name && name + " | "}

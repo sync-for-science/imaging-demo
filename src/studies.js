@@ -79,7 +79,11 @@ class Studies extends Component {
             <b>{data[selectingSeries].study.description}</b>
           </SeriesSelectModal>
         )}
-        {data.length > 0 && <h4 style={{textAlign: "center"}}>Available Studies <PopoverTip3 /></h4>}
+        {data.length > 0 && (
+          <h4 style={{ textAlign: "center" }}>
+            Available Studies <PopoverTip3 />
+          </h4>
+        )}
         <StudyCards cards={data} handleAction={this.handleAction} />
       </div>
     );

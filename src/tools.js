@@ -10,10 +10,9 @@ const stackScroller = keyboardTool(e => {
   const eventData = e.detail;
   const keyCode = eventData.keyCode;
 
-  if (keyCode !== keys.LEFT && keyCode !== keys.RIGHT)
-    return;
+  if (keyCode !== keys.LEFT && keyCode !== keys.RIGHT) return;
 
-  const step = (keyCode === keys.LEFT) ? -1 : 1;
+  const step = keyCode === keys.LEFT ? -1 : 1;
   scroll(eventData.element, step, true);
 
   e.stopImmediatePropagation();
@@ -25,11 +24,10 @@ const stackToggler = callback => {
     const eventData = e.detail;
     const keyCode = eventData.keyCode;
 
-    if (keyCode !== keys.SPACE)
-      return;
+    if (keyCode !== keys.SPACE) return;
     callback();
   };
   return keyboardTool(keyDownCallback);
-}
+};
 
 export { stackScroller, stackToggler };

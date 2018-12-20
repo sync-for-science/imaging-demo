@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from "react";
-import { Button, Col, Row } from 'reactstrap';
+import { Button, Col, Row } from "reactstrap";
 import * as cornerstone from "cornerstone-core";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as cornerstoneTools from "cornerstone-tools";
@@ -207,7 +207,9 @@ class DicomPanel extends Component {
     cornerstoneTools.zoom.activate(element, 4);
     cornerstoneTools.zoomWheel.activate(element);
     stackScroller.activate(element);
-    stackToggler(() => this.toggleRunningState(!this.state.running)).activate(element);
+    stackToggler(() => this.toggleRunningState(!this.state.running)).activate(
+      element
+    );
     cornerstoneTools.addStackStateManager(element);
   }
 
@@ -238,31 +240,36 @@ class DicomPanel extends Component {
 
         cornerstoneTools.playClip(element, 5);
       });
-      this.setState({running: true});
+      this.setState({ running: true });
     }
   }
 
   scroll = forward => {
     const element = this.element.current;
     cornerstoneTools.scroll(element, forward ? 1 : -1, true);
-  }
+  };
 
   toggleRunningState = start => {
     const { running } = this.state;
     const element = this.element.current;
-    if (running && !start)
-      cornerstoneTools.stopClip(element);
-    else if (!running && start)
-      cornerstoneTools.playClip(element, 5);
+    if (running && !start) cornerstoneTools.stopClip(element);
+    else if (!running && start) cornerstoneTools.playClip(element, 5);
     this.setState({ running: start });
-  }
+  };
 
   render() {
     const { running } = this.state;
     const { series } = this.props;
     return (
       <Fragment>
-        {series && <ControlPanel running={running} toggleState={this.toggleRunningState} series={series} scroll={this.scroll} />}
+        {series && (
+          <ControlPanel
+            running={running}
+            toggleState={this.toggleRunningState}
+            series={series}
+            scroll={this.scroll}
+          />
+        )}
         <div ref={this.element} style={{ height: "750px" }} />
       </Fragment>
     );
@@ -271,7 +278,7 @@ class DicomPanel extends Component {
 
 const ControlPanel = props => {
   const { series, running, toggleState, scroll } = props;
-  
+
   return (
     <Row>
       <Col sm={6}>
@@ -287,14 +294,34 @@ const ControlPanel = props => {
       </Col>
       {series.imageIds.length > 1 && (
         <Col sm={6} className="align-self-center text-center">
-          <span className="oi oi-chevron-left control-scroll" onClick={() => scroll(false)} />
-          <span className={[running ? "control-disabled" : "control-enabled", "oi", "oi-media-play"].join(" ")} onClick={() => toggleState(true)} />
-          <span className={[running ? "control-enabled" : "control-disabled", "oi", "oi-media-pause"].join(" ")} onClick={() => toggleState(false)} />
-          <span className="oi oi-chevron-right control-scroll" onClick={() => scroll(true)} />
+          <span
+            className="oi oi-chevron-left control-scroll"
+            onClick={() => scroll(false)}
+          />
+          <span
+            className={[
+              running ? "control-disabled" : "control-enabled",
+              "oi",
+              "oi-media-play"
+            ].join(" ")}
+            onClick={() => toggleState(true)}
+          />
+          <span
+            className={[
+              running ? "control-enabled" : "control-disabled",
+              "oi",
+              "oi-media-pause"
+            ].join(" ")}
+            onClick={() => toggleState(false)}
+          />
+          <span
+            className="oi oi-chevron-right control-scroll"
+            onClick={() => scroll(true)}
+          />
         </Col>
       )}
     </Row>
   );
-}
+};
 
 export { DicomStudy, DicomSeries, DicomPanel };

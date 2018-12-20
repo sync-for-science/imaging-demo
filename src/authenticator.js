@@ -25,9 +25,7 @@ import {
   redirectUri,
   registerClient
 } from "./oauth.js";
-import {
-  PopoverTip1
-} from "./popoverTips.js";
+import { PopoverTip1 } from "./popoverTips.js";
 import debounce from "lodash.debounce";
 
 const defaults = {
@@ -172,12 +170,11 @@ class Authenticator extends Component {
   };
 
   togglePopover = (i, e) => {
-    if (e)
-      e.preventDefault();
+    if (e) e.preventDefault();
     const { popoverOpen } = this.state;
     popoverOpen[i] = !popoverOpen[i];
     this.setState({ popoverOpen });
-  }
+  };
 
   render() {
     const {
