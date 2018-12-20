@@ -1,30 +1,29 @@
-import React, { Component, Fragment } from "react";
-import { Button, Col, Row } from "reactstrap";
 import * as cornerstone from "cornerstone-core";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as cornerstoneTools from "cornerstone-tools";
 import * as cornerstoneMath from "cornerstone-math";
 import * as dicomParser from "dicom-parser";
+
 import get from "lodash.get";
 
-import { stackScroller, stackToggler } from "./tools.js";
-
-cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-cornerstoneWADOImageLoader.webWorkerManager.initialize({
-  webWorkerPath: "js/webWorker.js",
-  taskConfiguration: {
-    decodeTask: {
-      codecsPath: "codecs.js" // relative to webWorkerPath???
+const initCornerstone = () => {
+  cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+  cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+  cornerstoneWADOImageLoader.webWorkerManager.initialize({
+    webWorkerPath: "js/webWorker.js",
+    taskConfiguration: {
+      decodeTask: {
+        codecsPath: "codecs.js" // relative to webWorkerPath???
+      }
     }
-  }
-});
-cornerstoneTools.external.cornerstone = cornerstone;
-cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+  });
+  cornerstoneTools.external.cornerstone = cornerstone;
+  cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+};
 
 const parseBoundary = header => {
   const items = header.split(";");
-  if (items)
+  if (items) {
     for (let item of items) {
       item = item.trim();
       if (item.indexOf("boundary") >= 0) {
@@ -34,14 +33,14 @@ const parseBoundary = header => {
         return b;
       }
     }
+  }
   return "";
 };
 
 const parseMultipart = (buffer, boundary) => {
   const bodyArray = new Uint8Array(buffer);
-  const boundaryBytes = Array.from(boundary, x => x.charCodeAt(0));
-  const boundaryArray = [0x2d, 0x2d].concat(boundaryBytes, [0x0d, 0x0a]);
-  const boundaryEndArray = [0x2d, 0x2d].concat(boundaryBytes, [0x2d, 0x2d]);
+  const boundaryArray = Array.from(`--${boundary}\r\n`, x => x.charCodeAt(0));
+  const boundaryEndArray = Array.from(`--${boundary}--`, x => x.charCodeAt(0));
 
   let stops = [],
     i = 0;
@@ -66,6 +65,7 @@ const parseMultipart = (buffer, boundary) => {
     let headers = {},
       line = "";
     for (let j = 0; j < rawPart.length - 1; j++) {
+      // 0x0d === '\r', 0x0a === '\n'
       if (rawPart[j] === 0x0d && rawPart[j + 1] === 0x0a) {
         if (line === "") {
           allParts.push({ headers, body: rawPart.slice(j + 2).buffer });
@@ -87,6 +87,7 @@ const parseMultipart = (buffer, boundary) => {
 const findPart = (arr, subarr, start = 0) => {
   for (let i = start; i < 1 + (arr.length - subarr.length); i++) {
     let j = 0;
+    // 0x0d === '\r', 0x0a === '\n'
     if (!(i === 0 || (arr[i - 2] === 0x0d && arr[i - 1] === 0x0a))) continue;
     for (; j < subarr.length; j++) if (arr[i + j] !== subarr[j]) break;
     if (j === subarr.length) return i;
@@ -166,7 +167,7 @@ class DicomSeries {
       this._imageIds.push({ imageId, index });
     } else {
       for (let i = 0; i < nFrames; i++) {
-        this._imageIds.push({ imageId: imageId + "?frame=" + i, index: i });
+        this._imageIds.push({ imageId: `${imageId}?frame=${i}`, index: i });
       }
     }
     if (!this.description) this.description = instanceData.string("x0008103e");
@@ -187,141 +188,4 @@ class DicomSeries {
   }
 }
 
-class DicomPanel extends Component {
-  constructor(props) {
-    super(props);
-    this.element = React.createRef();
-    this.state = {
-      running: true
-    };
-  }
-
-  componentDidMount() {
-    const element = this.element.current;
-    cornerstone.enable(element);
-    cornerstoneTools.keyboardInput.enable(element);
-    cornerstoneTools.mouseInput.enable(element);
-    cornerstoneTools.mouseWheelInput.enable(element);
-    cornerstoneTools.wwwc.activate(element, 1);
-    cornerstoneTools.pan.activate(element, 2);
-    cornerstoneTools.zoom.activate(element, 4);
-    cornerstoneTools.zoomWheel.activate(element);
-    stackScroller.activate(element);
-    stackToggler(() => this.toggleRunningState(!this.state.running)).activate(
-      element
-    );
-    cornerstoneTools.addStackStateManager(element);
-  }
-
-  componentWillUnmount() {
-    const element = this.element.current;
-    cornerstone.disable(element);
-  }
-
-  componentDidUpdate(prevProps) {
-    const { series } = this.props;
-    if (series !== null && prevProps.series !== series) {
-      const cornerstoneStack = {
-        currentImageIdIndex: 0,
-        imageIds: series.imageIds
-      };
-      const imageId = series.imageIds[0];
-      const element = this.element.current;
-      cornerstoneTools.stopClip(element);
-      cornerstone.loadImage(imageId).then(image => {
-        const viewport = cornerstone.getDefaultViewportForImage(element, image);
-        cornerstone.displayImage(element, image, viewport);
-
-        cornerstoneTools.clearToolState(element, "stack");
-        cornerstoneTools.addToolState(element, "stack", cornerstoneStack);
-
-        element.tabIndex = 0;
-        element.focus();
-
-        cornerstoneTools.playClip(element, 5);
-      });
-      this.setState({ running: true });
-    }
-  }
-
-  scroll = forward => {
-    const element = this.element.current;
-    cornerstoneTools.scroll(element, forward ? 1 : -1, true);
-  };
-
-  toggleRunningState = start => {
-    const { running } = this.state;
-    const element = this.element.current;
-    if (running && !start) cornerstoneTools.stopClip(element);
-    else if (!running && start) cornerstoneTools.playClip(element, 5);
-    this.setState({ running: start });
-  };
-
-  render() {
-    const { running } = this.state;
-    const { series } = this.props;
-    return (
-      <Fragment>
-        {series && (
-          <ControlPanel
-            running={running}
-            toggleState={this.toggleRunningState}
-            series={series}
-            scroll={this.scroll}
-          />
-        )}
-        <div ref={this.element} style={{ height: "750px" }} />
-      </Fragment>
-    );
-  }
-}
-
-const ControlPanel = props => {
-  const { series, running, toggleState, scroll } = props;
-
-  return (
-    <Row>
-      <Col sm={6}>
-        {series && (
-          <div>
-            <b>
-              {series.studyDescription ? series.studyDescription + " - " : ""}
-              {series.description}
-            </b>{" "}
-            for <b>{series.patientName}</b>
-          </div>
-        )}
-      </Col>
-      {series.imageIds.length > 1 && (
-        <Col sm={6} className="align-self-center text-center">
-          <span
-            className="oi oi-chevron-left control-scroll"
-            onClick={() => scroll(false)}
-          />
-          <span
-            className={[
-              running ? "control-disabled" : "control-enabled",
-              "oi",
-              "oi-media-play"
-            ].join(" ")}
-            onClick={() => toggleState(true)}
-          />
-          <span
-            className={[
-              running ? "control-enabled" : "control-disabled",
-              "oi",
-              "oi-media-pause"
-            ].join(" ")}
-            onClick={() => toggleState(false)}
-          />
-          <span
-            className="oi oi-chevron-right control-scroll"
-            onClick={() => scroll(true)}
-          />
-        </Col>
-      )}
-    </Row>
-  );
-};
-
-export { DicomStudy, DicomSeries, DicomPanel };
+export { DicomStudy, DicomSeries, initCornerstone };

@@ -1,10 +1,10 @@
-import React, { Component, Fragment } from "react";
+import React, { Component } from "react";
 import { Button, Col, Container, Row } from "reactstrap";
-import Studies from "./studies.js";
-import { DicomStudy, DicomPanel } from "./dicom.js";
-import get from "lodash.get";
-import moment from "moment";
-import { PopoverTip2 } from "./popoverTips.js";
+
+import Header from "./Header.jsx";
+import DicomPanel from "../DicomPanel.jsx";
+import { DicomStudy } from "../dicomUtils.js";
+import Studies from "../studies/Studies.jsx";
 
 const parseStudies = ({ entry }) =>
   entry.map(({ resource }) => new DicomStudy(resource));
@@ -22,13 +22,13 @@ class Dashboard extends Component {
   fetchWithAuth = (uri, options) => {
     const { auth } = this.props;
     options.headers = options.headers || {};
-    options.headers.Authorization = "Bearer " + auth.token;
+    options.headers.Authorization = `Bearer ${auth.token}`;
     return fetch(uri, options);
   };
 
   fetchDemographics() {
     const { clinicalUri, auth } = this.props;
-    this.fetchWithAuth(clinicalUri + "/Patient/" + auth.patientId, {
+    this.fetchWithAuth(`${clinicalUri}/Patient/${auth.patientId}`, {
       method: "GET"
     })
       .then(response => response.json())
@@ -38,8 +38,7 @@ class Dashboard extends Component {
 
   fetchStudies() {
     const { imagingUri, auth } = this.props;
-    console.log(auth);
-    this.fetchWithAuth(imagingUri + "/ImagingStudy?patient=" + auth.patientId, {
+    this.fetchWithAuth(`${imagingUri}/ImagingStudy?patient=${auth.patientId}`, {
       method: "GET"
     })
       .then(response => response.json())
@@ -57,7 +56,7 @@ class Dashboard extends Component {
     const { demographicData, studies, activeSeries } = this.state;
     const { revokeAuth } = this.props;
     return (
-      <Container fluid={true}>
+      <Container fluid>
         <Row>
           <Col sm={8}>
             <Header demographics={demographicData} />
@@ -84,35 +83,5 @@ class Dashboard extends Component {
     );
   }
 }
-
-const Header = ({ demographics }) => {
-  let name, birthday, city;
-
-  if (demographics) {
-    const fhirName = get(demographics, "name.0");
-    if (fhirName !== undefined)
-      name = fhirName.given.join(" ") + " " + fhirName.family;
-
-    if (demographics.birthDate)
-      birthday = moment(demographics.birthDate).format("MM-DD-YYYY");
-
-    const fhirAddress = get(demographics, "address.0");
-    if (fhirAddress !== undefined) {
-      city = fhirAddress.city + ", " + fhirAddress.state;
-    }
-  }
-
-  return (
-    <div style={{ margin: "20px" }}>
-      <h1>S4S Imaging Demo Application</h1>
-      <h5>
-        {name && name + " | "}
-        {birthday && "DOB: " + birthday + " | "}
-        {city}
-        <PopoverTip2 />
-      </h5>
-    </div>
-  );
-};
 
 export default Dashboard;

@@ -4,13 +4,13 @@ import moment from "moment";
 const redirectUri = new URL("redirect", window.location).href;
 
 const getAuthUris = async baseUri =>
-  fetch(baseUri + "/metadata")
+  fetch(`${baseUri}/metadata`)
     .then(response => response.json())
     .then(findAuthUris);
 
 const findAuthUris = metadataObj => {
-  for (const restObj of metadataObj.rest)
-    for (const extObj of restObj.security.extension)
+  for (const restObj of metadataObj.rest) {
+    for (const extObj of restObj.security.extension) {
       if (
         extObj.url ===
         "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris"
@@ -19,6 +19,8 @@ const findAuthUris = metadataObj => {
           obj[uriPair.url] = uriPair.valueUri;
           return obj;
         }, {});
+    }
+  }
 };
 
 const registerClient = async registerUri =>
@@ -49,7 +51,7 @@ const getAuthCode = (authorizeUri, clinicalUri, client) => {
   };
   const queryParams = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => queryParams.set(k, v));
-  const uri = authorizeUri + "?" + queryParams.toString();
+  const uri = `${authorizeUri}?${queryParams.toString()}`;
   const newWindow = window.open(uri);
 
   const bc = new BroadcastChannel(state);
@@ -63,10 +65,11 @@ const getAuthCode = (authorizeUri, clinicalUri, client) => {
 };
 
 const authTokenRequest = async (tokenUri, client, data) => {
+  const encodedAuth = base64.encode(`${client.id}:${client.secret}`);
   const response = await fetch(tokenUri, {
     method: "POST",
     headers: {
-      Authorization: "Basic " + base64.encode(client.id + ":" + client.secret)
+      Authorization: `Basic ${encodedAuth}`
     },
     body: data
   });
@@ -101,10 +104,10 @@ const refreshAuthToken = async (tokenUri, client, token) => {
 };
 
 export {
-  getAuthUris,
-  registerClient,
   getAuthCode,
   getAuthToken,
+  getAuthUris,
+  redirectUri,
   refreshAuthToken,
-  redirectUri
+  registerClient
 };

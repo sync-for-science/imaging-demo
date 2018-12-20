@@ -51,7 +51,7 @@ const PopoverTip1 = () => (
       user would typically see a "Choose My Provider" search box, rather than
       pasting in API endpoint URLs directly. This functionality would be powered
       by a directory of portal endpoints, covering both clinical and imaging
-      data.{" "}
+      data.
     </p>
     <p>
       Given a clinical data endpoint URL, the app connects using the SMART API,
@@ -60,6 +60,7 @@ const PopoverTip1 = () => (
       <a
         href="http://hl7.org/fhir/smart-app-launch/#standalone-launch-sequence"
         target="_blank"
+        rel="noopener noreferrer"
       >
         SMART Standalone Launch
       </a>
@@ -113,7 +114,11 @@ const PopoverTip5 = () => (
     <p>
       When a user clicks the <code>Review</code> button next to a specific
       study, the Imaging Demo App uses the{" "}
-      <a href="https://cornerstonejs.org/" target="_blank">
+      <a
+        href="https://cornerstonejs.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Cornerstone library
       </a>{" "}
       to render the study to the screen and provide tools to interact with the

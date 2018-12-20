@@ -10,13 +10,15 @@ import {
   Navbar,
   NavbarBrand
 } from "reactstrap";
-import Authenticator from "./authenticator.js";
-import Dashboard from "./dashboard.js";
-import "./styles/index.scss";
-import "./styles/open-iconic-bootstrap.scss";
+
+import Authenticator from "./Authenticator.jsx";
+import Dashboard from "./dashboard/Dashboard.jsx";
+import { refreshAuthToken } from "./oauthUtils.js";
+
 import logo from "./logo.png";
 import githubLogo from "./github.svg";
-import { refreshAuthToken } from "./oauth.js";
+import "./styles/index.scss";
+import "./styles/open-iconic-bootstrap.scss";
 
 class Main extends Component {
   constructor(props) {
@@ -37,13 +39,16 @@ class Main extends Component {
       refreshTimerId: null
     };
 
-    if (auth)
-      this.setRefreshTimer(
+    if (auth) {
+      const timerId = this.setRefreshTimer(
         auth.refreshUri,
         auth.expires,
         auth.refreshToken,
-        auth.client
+        auth.client,
+        false // don't call this.setState
       );
+      this.state.refreshTimerId = timerId;
+    }
   }
 
   setAuth = (clinicalUri, imagingUri, auth) => {
@@ -78,7 +83,7 @@ class Main extends Component {
     if (refreshTimerId) clearTimeout(refreshTimerId);
   }
 
-  setRefreshTimer = (tokenUri, expiryTime, token, client) => {
+  setRefreshTimer = (tokenUri, expiryTime, token, client, setState = true) => {
     if (!expiryTime || !token) return;
     const when = expiryTime - new Date().getTime() - 30000; // 30 seconds before expiration
     this.clearRefreshTimer();
@@ -94,7 +99,8 @@ class Main extends Component {
       }
       this.setAuth(clinicalUri, imagingUri, auth);
     }, when);
-    this.setState({ refreshTimerId });
+    if (setState) this.setState({ refreshTimerId });
+    return refreshTimerId;
   };
 
   componentWillUnmount() {
@@ -117,7 +123,7 @@ class Main extends Component {
       );
     return (
       <div>
-        <Modal isOpen={showModal} centered={true}>
+        <Modal isOpen={showModal} centered>
           <ModalBody>
             Your authorization token has expired or was revoked. Please
             reauthenticate.
@@ -141,7 +147,12 @@ class Main extends Component {
                 href="https://github.com/sync-for-science/imaging-demo"
                 target="_blank"
               >
-                <img src={githubLogo} width="25px" height="25px" />
+                <img
+                  src={githubLogo}
+                  width="25px"
+                  height="25px"
+                  alt="Go to GitHub"
+                />
               </NavLink>
             </NavItem>
           </Nav>

@@ -1,7 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import Main from "./main.js";
-import Redirect from "./redirect.js";
+
+import Main from "./Main.jsx";
+import Redirect from "./Redirect.jsx";
 
 const App = () => {
   return (

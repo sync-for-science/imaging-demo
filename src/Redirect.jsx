@@ -5,7 +5,7 @@ const Redirect = props => {
   const bc = new BroadcastChannel(state);
   bc.postMessage(code);
   bc.close();
-  return "";
+  return "This window should close momentarily.";
 };
 
 export default Redirect;
