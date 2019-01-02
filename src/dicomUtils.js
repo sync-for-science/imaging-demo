@@ -6,7 +6,10 @@ import * as dicomParser from "dicom-parser";
 
 import get from "lodash.get";
 
+let cornerstoneInitDone = false;
 const initCornerstone = () => {
+  if (cornerstoneInitDone)
+    return;
   cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
   cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
   cornerstoneWADOImageLoader.webWorkerManager.initialize({
@@ -19,6 +22,7 @@ const initCornerstone = () => {
   });
   cornerstoneTools.external.cornerstone = cornerstone;
   cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+  cornerstoneInitDone = true;
 };
 
 const parseBoundary = header => {

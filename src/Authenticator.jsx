@@ -5,6 +5,7 @@ import {
   Col,
   Collapse,
   Container,
+  Fade,
   Form,
   FormGroup,
   FormText,
@@ -36,6 +37,10 @@ const defaults = {
 class Authenticator extends Component {
   constructor(props) {
     super(props);
+    let savedClientData = {};
+    try {
+      savedClientData = JSON.parse(localStorage.getItem("savedClientData")) || {};
+    } catch {}
     this.state = {
       client: { id: "", secret: "" },
       progressState: "initial",
@@ -44,9 +49,16 @@ class Authenticator extends Component {
       showClientRegistration: false,
       clinicalUri: "",
       imagingUri: "",
+      hasClientData: false,
       error: null,
-      popoverOpen: [false, false, false, false]
+      popoverOpen: [false, false, false, false],
+      savedClientData
     };
+  }
+
+  componentWillUnmount = () => {
+    const { savedClientData } = this.state;
+    localStorage.setItem("savedClientData", JSON.stringify(savedClientData));
   }
 
   progressValue() {
@@ -76,7 +88,7 @@ class Authenticator extends Component {
   }
 
   startAuth = async () => {
-    const { clinicalUri, imagingUri, showClientRegistration } = this.state;
+    const { clinicalUri, imagingUri, showClientRegistration, savedClientData } = this.state;
     let { client } = this.state;
     if (!clinicalUri) {
       this.setState({ error: "Please enter a clinical FHIR server base URI" });
@@ -123,6 +135,7 @@ class Authenticator extends Component {
       }
       this.setState({ client: client, progressState: "client" });
     }
+    savedClientData[clinicalUri] = client;
   };
 
   continueAuth = async () => {
@@ -160,14 +173,18 @@ class Authenticator extends Component {
   };
 
   prefill = () => {
-    const newState = {};
-    newState.clinicalUri = defaults.clinicalUri;
-    newState.imagingUri = defaults.imagingUri;
-    if (this.state.showClientRegistration)
-      newState.showClientRegistration = false;
-
-    this.setState(newState);
+    this.setState({
+      imagingUri: defaults.imagingUri,
+      showClientRegistration: false
+    });
+    this.updateClinicalUri(defaults.clinicalUri); // trigger saved client data button
   };
+
+  updateClinicalUri = uri => {
+    const { savedClientData } = this.state;
+    const hasClientData = (uri in savedClientData);
+    this.setState({ clinicalUri: uri, hasClientData });
+  }
 
   togglePopover = (i, e) => {
     if (e) e.preventDefault();
@@ -175,6 +192,12 @@ class Authenticator extends Component {
     popoverOpen[i] = !popoverOpen[i];
     this.setState({ popoverOpen });
   };
+
+  fillSavedClientData = () => {
+    const { savedClientData, clinicalUri } = this.state;
+    const { id, secret } = savedClientData[clinicalUri]; // new `client` object so react picks up on changes
+    this.setState({ client: { id, secret }, showClientRegistration: true });
+  }
 
   render() {
     const {
@@ -184,7 +207,8 @@ class Authenticator extends Component {
       clinicalUri,
       imagingUri,
       client,
-      error
+      error,
+      hasClientData
     } = this.state;
 
     return (
@@ -235,7 +259,7 @@ class Authenticator extends Component {
               name="clinicalUri"
               id="clinicalUri"
               value={clinicalUri}
-              onChange={uri => this.setState({ clinicalUri: uri })}
+              onChange={this.updateClinicalUri}
               bsSize="lg"
             />
             <FormText>Enter the base URI for the clinical FHIR server</FormText>
@@ -253,22 +277,31 @@ class Authenticator extends Component {
             />
             <FormText>Enter the base URI for the imaging FHIR server</FormText>
           </FormGroup>
-          <FormGroup check>
-            <Input
-              type="checkbox"
-              name="registerClient"
-              id="registerClient"
-              checked={!showClientRegistration}
-              onChange={() =>
-                this.setState({
-                  showClientRegistration: !showClientRegistration
-                })
-              }
-            />
-            <Label for="registerClient" check>
-              Dynamically register new client
-            </Label>
-          </FormGroup>
+          <Row>
+            <Col sm={4}>
+              <FormGroup check>
+                <Input
+                  type="checkbox"
+                  name="registerClient"
+                  id="registerClient"
+                  checked={!showClientRegistration}
+                  onChange={() =>
+                    this.setState({
+                      showClientRegistration: !showClientRegistration
+                    })
+                  }
+                />
+                <Label for="registerClient" check>
+                  Dynamically register new client
+                </Label>
+              </FormGroup>
+            </Col>
+            <Col sm={8}>
+              <Fade in={hasClientData}>
+                <Button size="sm" onClick={this.fillSavedClientData}>Use saved client data</Button>
+              </Fade>
+            </Col>
+          </Row>
           <Collapse isOpen={showClientRegistration}>
             <Row form style={{ marginTop: "20px" }}>
               <Col sm={6}>
