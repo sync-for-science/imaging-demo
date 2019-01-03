@@ -6,6 +6,7 @@ import * as cornerstone from "cornerstone-core";
 import * as cornerstoneTools from "cornerstone-tools";
 
 import { initCornerstone } from "./dicomUtils.js";
+import { PopoverTip5 } from "./PopoverTips.jsx";
 import { stackScroller, stackToggler } from "./tools.js";
 
 class DicomPanel extends Component {
@@ -100,46 +101,52 @@ class DicomPanel extends Component {
 
 const ControlPanel = props => {
   const { series, running, toggleState, scroll } = props;
+  const descriptions = [];
+  if (series.studyDescription) descriptions.push(series.studyDescription);
+  if (series.description) descriptions.push(series.description);
+  if (descriptions.length === 0) descriptions.push("DICOM image");
+
+  const multiImage = series.imageIds.length > 1;
 
   return (
     <Row>
-      <Col sm={6}>
-        {series && (
-          <div>
-            <b>
-              {series.studyDescription ? `${series.studyDescription} - ` : ""}
-              {series.description}
-            </b>{" "}
-            for <b>{series.patientName}</b>
-          </div>
-        )}
-      </Col>
-      {series.imageIds.length > 1 && (
-        <Col sm={6} className="align-self-center text-center">
-          <span
-            className="oi oi-chevron-left control-scroll"
-            onClick={() => scroll(false)}
-          />
-          <span
-            className={classNames("oi", "oi-media-play", {
-              "control-disabled": running,
-              "control-enabled": !running
-            })}
-            onClick={() => toggleState(true)}
-          />
-          <span
-            className={classNames("oi", "oi-media-pause", {
-              "control-disabled": !running,
-              "control-enabled": running
-            })}
-            onClick={() => toggleState(false)}
-          />
-          <span
-            className="oi oi-chevron-right control-scroll"
-            onClick={() => scroll(true)}
-          />
+      {series && (
+        <Col sm={6}>
+          {descriptions.join(" - ")}
+          {series.patientName && ` for ${series.patientName}`}
+          <PopoverTip5 />
         </Col>
       )}
+      <Col sm={6} className="align-self-center text-center">
+        <span
+          className={classNames("oi", "oi-chevron-left", "control-scroll", {
+            "control-enabled": multiImage,
+            "control-disabled": !multiImage
+          })}
+          onClick={() => scroll(false)}
+        />
+        <span
+          className={classNames("oi", "oi-media-play", {
+            "control-disabled": running || !multiImage,
+            "control-enabled": !running && multiImage
+          })}
+          onClick={() => toggleState(true)}
+        />
+        <span
+          className={classNames("oi", "oi-media-pause", {
+            "control-disabled": !running || !multiImage,
+            "control-enabled": running && multiImage
+          })}
+          onClick={() => toggleState(false)}
+        />
+        <span
+          className={classNames("oi", "oi-chevron-right", "control-scroll", {
+            "control-enabled": multiImage,
+            "control-disabled": !multiImage
+          })}
+          onClick={() => scroll(true)}
+        />
+      </Col>
     </Row>
   );
 };

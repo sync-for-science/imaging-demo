@@ -8,8 +8,7 @@ import get from "lodash.get";
 
 let cornerstoneInitDone = false;
 const initCornerstone = () => {
-  if (cornerstoneInitDone)
-    return;
+  if (cornerstoneInitDone) return;
   cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
   cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
   cornerstoneWADOImageLoader.webWorkerManager.initialize({
@@ -23,6 +22,14 @@ const initCornerstone = () => {
   cornerstoneTools.external.cornerstone = cornerstone;
   cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
   cornerstoneInitDone = true;
+};
+
+const parseDicomName = input => {
+  if (!input) return null;
+  // up to 5 sections: last name, given name, middle name, prefix, suffix
+  let [last, first, middle, prefix, suffix] = input.split("^");
+  const outputParts = [prefix, first, middle, last, suffix].filter(x => x); // remove empty or null
+  return outputParts.join(" ");
 };
 
 const parseBoundary = header => {
@@ -113,7 +120,9 @@ class DicomStudy {
     this.modalities = fhirResource.modalityList.map(m => m.code);
     this.date = new Date(fhirResource.started);
     this.accession = get(fhirResource, "accession.value");
-    this.referringPhysician = get(fhirResource, "referrer.display");
+    this.referringPhysician = parseDicomName(
+      get(fhirResource, "referrer.display")
+    );
     this.series = [];
     this._nSeries = fhirResource.numberOfSeries;
   }
@@ -179,10 +188,8 @@ class DicomSeries {
     if (!this.studyDescription)
       this.studyDescription = instanceData.string("x00081030");
     const dicomPatientName = instanceData.string("x00100010");
-    if (!this.patientName && dicomPatientName) {
-      const names = dicomPatientName.split("^");
-      this.patientName = names.reverse().join(" ");
-    }
+    if (!this.patientName && dicomPatientName)
+      this.patientName = parseDicomName(dicomPatientName);
   }
 
   get imageIds() {

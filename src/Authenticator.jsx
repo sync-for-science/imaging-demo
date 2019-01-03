@@ -39,7 +39,8 @@ class Authenticator extends Component {
     super(props);
     let savedClientData = {};
     try {
-      savedClientData = JSON.parse(localStorage.getItem("savedClientData")) || {};
+      savedClientData =
+        JSON.parse(localStorage.getItem("savedClientData")) || {};
     } catch {}
     this.state = {
       client: { id: "", secret: "" },
@@ -59,7 +60,7 @@ class Authenticator extends Component {
   componentWillUnmount = () => {
     const { savedClientData } = this.state;
     localStorage.setItem("savedClientData", JSON.stringify(savedClientData));
-  }
+  };
 
   progressValue() {
     const { progressState } = this.state;
@@ -88,7 +89,12 @@ class Authenticator extends Component {
   }
 
   startAuth = async () => {
-    const { clinicalUri, imagingUri, showClientRegistration, savedClientData } = this.state;
+    const {
+      clinicalUri,
+      imagingUri,
+      showClientRegistration,
+      savedClientData
+    } = this.state;
     let { client } = this.state;
     if (!clinicalUri) {
       this.setState({ error: "Please enter a clinical FHIR server base URI" });
@@ -182,9 +188,9 @@ class Authenticator extends Component {
 
   updateClinicalUri = uri => {
     const { savedClientData } = this.state;
-    const hasClientData = (uri in savedClientData);
+    const hasClientData = uri in savedClientData;
     this.setState({ clinicalUri: uri, hasClientData });
-  }
+  };
 
   togglePopover = (i, e) => {
     if (e) e.preventDefault();
@@ -197,7 +203,7 @@ class Authenticator extends Component {
     const { savedClientData, clinicalUri } = this.state;
     const { id, secret } = savedClientData[clinicalUri]; // new `client` object so react picks up on changes
     this.setState({ client: { id, secret }, showClientRegistration: true });
-  }
+  };
 
   render() {
     const {
@@ -298,7 +304,9 @@ class Authenticator extends Component {
             </Col>
             <Col sm={8}>
               <Fade in={hasClientData}>
-                <Button size="sm" onClick={this.fillSavedClientData}>Use saved client data</Button>
+                <Button size="sm" onClick={this.fillSavedClientData}>
+                  Use saved client data
+                </Button>
               </Fade>
             </Col>
           </Row>
