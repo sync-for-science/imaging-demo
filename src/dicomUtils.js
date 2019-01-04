@@ -121,6 +121,7 @@ class DicomStudy {
     this.date = new Date(fhirResource.started);
     this.accession = get(fhirResource, "accession.value");
     this.referringPhysician = parseDicomName(
+      // this should ideally use the reference instead of display value
       get(fhirResource, "referrer.display")
     );
     this.series = [];

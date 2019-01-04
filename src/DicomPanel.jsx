@@ -18,6 +18,10 @@ class DicomPanel extends Component {
     };
   }
 
+  handleResize = () => {
+    cornerstone.resize(this.element.current);
+  };
+
   componentDidMount() {
     initCornerstone();
     const element = this.element.current;
@@ -34,11 +38,14 @@ class DicomPanel extends Component {
       element
     );
     cornerstoneTools.addStackStateManager(element);
+
+    window.addEventListener('resize', this.handleResize);
   }
 
   componentWillUnmount() {
     const element = this.element.current;
     cornerstone.disable(element);
+    window.removeEventListener('resize', this.handleResize);
   }
 
   componentDidUpdate(prevProps) {
@@ -91,6 +98,7 @@ class DicomPanel extends Component {
             toggleState={this.toggleRunningState}
             series={series}
             scroll={this.scroll}
+            multiframe={series.imageIds.length > 1}
           />
         )}
         <div ref={this.element} style={{ height: "750px" }} />
@@ -100,13 +108,11 @@ class DicomPanel extends Component {
 }
 
 const ControlPanel = props => {
-  const { series, running, toggleState, scroll } = props;
+  const { series, running, toggleState, scroll, multiframe } = props;
   const descriptions = [];
   if (series.studyDescription) descriptions.push(series.studyDescription);
   if (series.description) descriptions.push(series.description);
   if (descriptions.length === 0) descriptions.push("DICOM image");
-
-  const multiImage = series.imageIds.length > 1;
 
   return (
     <Row>
@@ -120,29 +126,29 @@ const ControlPanel = props => {
       <Col sm={6} className="align-self-center text-center">
         <span
           className={classNames("oi", "oi-chevron-left", "control-scroll", {
-            "control-enabled": multiImage,
-            "control-disabled": !multiImage
+            "control-enabled": multiframe,
+            "control-disabled": !multiframe
           })}
           onClick={() => scroll(false)}
         />
         <span
           className={classNames("oi", "oi-media-play", {
-            "control-disabled": running || !multiImage,
-            "control-enabled": !running && multiImage
+            "control-disabled": running || !multiframe,
+            "control-enabled": !running && multiframe
           })}
           onClick={() => toggleState(true)}
         />
         <span
           className={classNames("oi", "oi-media-pause", {
-            "control-disabled": !running || !multiImage,
-            "control-enabled": running && multiImage
+            "control-disabled": !running || !multiframe,
+            "control-enabled": running && multiframe
           })}
           onClick={() => toggleState(false)}
         />
         <span
           className={classNames("oi", "oi-chevron-right", "control-scroll", {
-            "control-enabled": multiImage,
-            "control-disabled": !multiImage
+            "control-enabled": multiframe,
+            "control-disabled": !multiframe
           })}
           onClick={() => scroll(true)}
         />

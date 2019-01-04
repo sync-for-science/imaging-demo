@@ -57,25 +57,23 @@ class Dashboard extends Component {
     const { revokeAuth } = this.props;
     return (
       <Container fluid>
-        <Row>
-          <Col sm={8}>
-            <Header demographics={demographicData} />
-          </Col>
-          <Col sm={4} className="align-self-center text-center">
+        <div className="d-flex flex-wrap">
+          <Header demographics={demographicData} />
+          <div className="ml-auto align-self-center">
             <Button size="sm" outline color="primary" onClick={revokeAuth}>
               Revoke authorization
             </Button>
-          </Col>
-        </Row>
+          </div>
+        </div>
         <Row>
-          <Col sm={3}>
+          <Col xl={3} lg={4}>
             <Studies
               studies={studies}
               fetchWithAuth={this.fetchWithAuth}
               setActiveSeries={activeSeries => this.setState({ activeSeries })}
             />
           </Col>
-          <Col sm={9}>
+          <Col xl={9} lg={8}>
             <DicomPanel series={activeSeries} />
           </Col>
         </Row>

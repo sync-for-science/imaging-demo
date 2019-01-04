@@ -284,7 +284,7 @@ class Authenticator extends Component {
             <FormText>Enter the base URI for the imaging FHIR server</FormText>
           </FormGroup>
           <Row>
-            <Col sm={4}>
+            <Col>
               <FormGroup check>
                 <Input
                   type="checkbox"
@@ -302,7 +302,7 @@ class Authenticator extends Component {
                 </Label>
               </FormGroup>
             </Col>
-            <Col sm={8}>
+            <Col>
               <Fade in={hasClientData}>
                 <Button size="sm" onClick={this.fillSavedClientData}>
                   Use saved client data
