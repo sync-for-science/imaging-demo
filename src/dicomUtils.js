@@ -6,7 +6,7 @@ import * as dicomParser from "dicom-parser";
 
 import get from "lodash.get";
 
-let cornerstoneInitDone = false;
+let cornerstoneInitDone = false; // only performed once
 const initCornerstone = () => {
   if (cornerstoneInitDone) return;
   cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
@@ -24,6 +24,7 @@ const initCornerstone = () => {
   cornerstoneInitDone = true;
 };
 
+// translate DICOM PN fields into something human-readable
 const parseDicomName = input => {
   if (!input) return null;
   // up to 5 sections: last name, given name, middle name, prefix, suffix
@@ -32,6 +33,7 @@ const parseDicomName = input => {
   return outputParts.join(" ");
 };
 
+// crudely parse the boundary from the multipart response header
 const parseBoundary = header => {
   const items = header.split(";");
   if (items) {
@@ -48,6 +50,7 @@ const parseBoundary = header => {
   return "";
 };
 
+// given the full multipart response buffer and the boundary string, return an array of objects containing the header and body for each part in the response
 const parseMultipart = (buffer, boundary) => {
   const bodyArray = new Uint8Array(buffer);
   const boundaryArray = Array.from(`--${boundary}\r\n`, x => x.charCodeAt(0));
@@ -61,8 +64,8 @@ const parseMultipart = (buffer, boundary) => {
     stops.push(i);
     i += 1;
   }
-  i = findPart(bodyArray, boundaryEndArray, stops[stops.length - 1] + 1);
 
+  i = findPart(bodyArray, boundaryEndArray, stops[stops.length - 1] + 1);
   if (i !== -1) stops.push(i);
 
   let allParts = [],
@@ -70,7 +73,7 @@ const parseMultipart = (buffer, boundary) => {
     end = 0;
   for (i = 0; i < stops.length - 1; i++) {
     start = stops[i] + boundaryArray.length;
-    end = stops[i + 1] - 2;
+    end = stops[i + 1] - 2; // don't include the 2 newline bytes
 
     const rawPart = bodyArray.slice(start, end);
     let headers = {},
@@ -78,7 +81,7 @@ const parseMultipart = (buffer, boundary) => {
     for (let j = 0; j < rawPart.length - 1; j++) {
       // 0x0d === '\r', 0x0a === '\n'
       if (rawPart[j] === 0x0d && rawPart[j + 1] === 0x0a) {
-        if (line === "") {
+        if (line === "") { // empty line signifies end of headers and start of body (after 2 more newline bytes)
           allParts.push({ headers, body: rawPart.slice(j + 2).buffer });
           break;
         }
@@ -95,11 +98,15 @@ const parseMultipart = (buffer, boundary) => {
   return allParts;
 };
 
+// find the next occurrence of a subarray *starting on a new line* within an array
 const findPart = (arr, subarr, start = 0) => {
   for (let i = start; i < 1 + (arr.length - subarr.length); i++) {
     let j = 0;
+
     // 0x0d === '\r', 0x0a === '\n'
+    // if not the first line in buffer or not preceeded by a newline, we don't look
     if (!(i === 0 || (arr[i - 2] === 0x0d && arr[i - 1] === 0x0a))) continue;
+
     for (; j < subarr.length; j++) if (arr[i + j] !== subarr[j]) break;
     if (j === subarr.length) return i;
   }

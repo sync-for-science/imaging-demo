@@ -1,18 +1,21 @@
-# Imaging demo
+# S4S Imaging Demo Application
 
-- [x] Dynamic client registration
-- [x] OAuth 2.0 workflow in new window/tab with BroadcastChannel API
-- [x] Authorization code exchange
-- [x] ImagingStudy retrieval from FHIR server
-- [x] DICOM data display with limited interaction
-- [ ] Error handling
-- [ ] User interface
-- [ ] Handling of multiple studies and series
-- [ ] Choice of preset clients or dynamic client registration
-- [ ] Choice of preset or user-provided authentication endpoints
-- [ ] Display data from basic patient demographics
-- [ ] Handle 503
-- [ ] Refresh token
+[Live demo](https://imaging.demo.syncfor.science/)
+
+This browser-based React app demonstrates how an application can retrieve DICOM imaging data from a user's patient portal and render it interactively, in this case with the [Cornerstone library](https://github.com/cornerstonejs/cornerstone). The user's health record vendor should provide a clinical data FHIR endpoint as well as an imaging data FHIR endpoint (a reference implementation of this stack is available [here](https://github.com/sync-for-science/s4s-imaging-stack)).
+
+Features include:
+- Developer tips to highlight interesting implementation details
+- Optional dynamic OAuth client registration
+- Client credentials saved to the browser for future use
+- Authorization tokens saved to the session
+- Authorization revocation
+- Automatic access token refreshing based on expiry time
+- Retrieval of patient demographic data from the clinical data FHIR server
+- Retrieval of a list of imaging studies from the imaging data FHIR server
+- Asynchronous download and review of individual studies from the imaging data server
+- Simple interaction with rendered DICOM data, including pan, zoom and brightness
+- Playback controls for multiframe DICOM data
 
 ## Installation
 

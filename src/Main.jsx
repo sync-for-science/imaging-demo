@@ -44,24 +44,23 @@ class Main extends Component {
         auth.refreshUri,
         auth.expires,
         auth.refreshToken,
-        auth.client,
-        false // don't call this.setState
+        auth.client
       );
       this.state.refreshTimerId = timerId;
     }
   }
 
   setAuth = (clinicalUri, imagingUri, auth) => {
-    this.setState({ clinicalUri, imagingUri, auth });
     sessionStorage.setItem("clinicalUri", clinicalUri);
     sessionStorage.setItem("imagingUri", imagingUri);
     sessionStorage.setItem("auth", JSON.stringify(auth));
-    this.setRefreshTimer(
+    const refreshTimerId = this.setRefreshTimer(
       auth.refreshUri,
       auth.expires,
       auth.refreshToken,
       auth.client
     );
+    this.setState({ clinicalUri, imagingUri, auth, refreshTimerId });
   };
 
   revokeAuth = () => {
@@ -83,13 +82,13 @@ class Main extends Component {
     if (refreshTimerId) clearTimeout(refreshTimerId);
   }
 
-  setRefreshTimer = (tokenUri, expiryTime, token, client, setState = true) => {
+  setRefreshTimer = (tokenUri, expiryTime, token, client) => {
     if (!expiryTime || !token) return;
     const when = expiryTime - new Date().getTime() - 30000; // 30 seconds before expiration
     this.clearRefreshTimer();
     const { clinicalUri, imagingUri } = this.state;
-    let auth;
     const refreshTimerId = setTimeout(async () => {
+      let auth;
       try {
         auth = await refreshAuthToken(tokenUri, client, token);
       } catch {
@@ -99,7 +98,6 @@ class Main extends Component {
       }
       this.setAuth(clinicalUri, imagingUri, auth);
     }, when);
-    if (setState) this.setState({ refreshTimerId });
     return refreshTimerId;
   };
 
