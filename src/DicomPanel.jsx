@@ -39,13 +39,13 @@ class DicomPanel extends Component {
     );
     cornerstoneTools.addStackStateManager(element);
 
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener("resize", this.handleResize);
   }
 
   componentWillUnmount() {
     const element = this.element.current;
     cornerstone.disable(element);
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener("resize", this.handleResize);
   }
 
   componentDidUpdate(prevProps) {

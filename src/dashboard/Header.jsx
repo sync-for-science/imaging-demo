@@ -1,11 +1,12 @@
 import React from "react";
+import { Button } from "reactstrap";
 
 import get from "lodash.get";
 import moment from "moment";
 
 import { PopoverTip2 } from "../PopoverTips.jsx";
 
-const Header = ({ demographics }) => {
+const Header = ({ demographics, revokeAuth }) => {
   let name, birthday, city;
 
   if (demographics) {
@@ -30,6 +31,15 @@ const Header = ({ demographics }) => {
       <h5>
         {elements.join(" | ")}
         <PopoverTip2 />
+        <Button
+          size="sm"
+          outline
+          color="primary"
+          onClick={revokeAuth}
+          style={{ marginLeft: "10px" }}
+        >
+          Revoke authorization
+        </Button>
       </h5>
     </div>
   );

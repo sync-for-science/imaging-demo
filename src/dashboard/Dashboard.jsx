@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Button, Col, Container, Row } from "reactstrap";
+import { Col, Container, Row } from "reactstrap";
 
 import Header from "./Header.jsx";
 import DicomPanel from "../DicomPanel.jsx";
@@ -58,12 +58,7 @@ class Dashboard extends Component {
     return (
       <Container fluid>
         <div className="d-flex flex-wrap">
-          <Header demographics={demographicData} />
-          <div className="ml-auto align-self-center">
-            <Button size="sm" outline color="primary" onClick={revokeAuth}>
-              Revoke authorization
-            </Button>
-          </div>
+          <Header demographics={demographicData} revokeAuth={revokeAuth} />
         </div>
         <Row>
           <Col xl={3} lg={4}>

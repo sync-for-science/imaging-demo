@@ -48,7 +48,10 @@ class Studies extends Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.studies !== this.props.studies) {
-      const studies = this.props.studies.map(d => ({ study: d, state: "initial" }));
+      const studies = this.props.studies.map(d => ({
+        study: d,
+        state: "initial"
+      }));
       studies.sort((s1, s2) => s2.study.date - s1.study.date); // most recent first
       this.setState({
         data: studies

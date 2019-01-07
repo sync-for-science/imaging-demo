@@ -17,7 +17,12 @@ const StudyCards = ({ cards, handleAction }) => (
       cardInfo.push(`Number of series: ${study.nSeries}`);
 
       return (
-        <Card key={i} body style={{ position: "relative", minWidth: "300px" }} className="d-flex flex-column flex-grow-0">
+        <Card
+          key={i}
+          body
+          style={{ position: "relative", minWidth: "300px" }}
+          className="d-flex flex-column flex-grow-0"
+        >
           <CardTitle>
             Study #{i + 1}
             {study.description && ` - ${study.description}`}
@@ -28,7 +33,8 @@ const StudyCards = ({ cards, handleAction }) => (
           </CardTitle>
           <CardText className="mt-auto">
             {cardInfo.map((card, i) => [
-              card, (i < cardInfo.length - 1) && <br />
+              card,
+              i < cardInfo.length - 1 && <br />
             ])}
           </CardText>
           <Button
