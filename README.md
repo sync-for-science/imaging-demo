@@ -1,4 +1,4 @@
-# S4S Imaging Demo Application
+# S4S Imaging Demo Application -- gh-pages
 
 [Live demo](https://imaging.demo.syncfor.science/)
 
